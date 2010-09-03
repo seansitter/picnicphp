@@ -1,0 +1,117 @@
+<refentry id="{@id}">
+ <refnamediv>
+  <refname>Installation</refname>
+ </refnamediv>
+ <refsynopsisdiv>
+ </refsynopsisdiv>
+ <refsect1 id="{@id prerequisites}">
+   <para>
+     Picnic currently requires PHP >= 5.1, Apache and MySQL.
+   </para>
+ </refsect1>
+ <refsect1 id="{@id preinstall}">
+  <title>Pre-Install</title>
+  <refsect2 id="{@id preinstall-apache-php}">
+    <title>apache and php</title>
+    <para>Make sure you have a working {@link http://httpd.apache.org/ apache web server} installation with {@link http://www.php.net/downloads.php php >= 5.1} installed. We recommend you configure apache to  use {@link http://httpd.apache.org/docs/2.2/vhosts/ virtual hosts} as it provides the cleanest method for running multiple development hosts on a single machine. A method using .htaccess files is also supported.</para>
+  </refsect2>
+  <refsect2 id="{@id preinstall-mysql}">
+    <title>mysql</title>
+    Make sure you have a properly installed and running MySQL instance and you know how to and have permissions to create a new database.
+  </refsect2>
+  <refsect1 id="{@id install-linux}">
+    <title>Mac, Linux, Unix</title>
+    <refsect2 id="{@id install-obtain-svn}">
+      <title>obtaining picnic from subversion</title>
+      <itemizedlist>
+        <listitem>Check out a copy of the picnic project from google code: 
+          <programlisting role="shell">svn co https://picnicphp.googlecode.com/svn/trunk picnic</programlisting>
+        </listitem>
+      </itemizedlist>
+    </refsect2>
+    <refsect2 id="{@id install-obtain-tarball}">
+      <title>obtaining picnic from tarball</title>
+      <itemizedlist>
+        <listitem>Grab the latest source tarball {@link http://code.google.com/p/picnicphp/downloads/list here}.</listitem> 
+        <listitem>Expand the tarball: 
+          <programlisting role="shell">tar xzvf picnic-XXX.tgz</programlisting>
+        </listitem>
+      </itemizedlist>
+    </refsect2>
+    <refsect2 id="{@id install-linux-setup-picnic-apache}">
+      <title>setting up picnic and apache</title>
+      <itemizedlist>
+        <listitem>Add picnic/bin to the system path in your profile:
+          <programlisting role="shell">export PATH=$PATH:/path/to/picnic/bin</programlisting>
+        </listitem>
+        <listitem>
+          If you intend to use virtual hosts, add the following to your httpd.conf, just below the Listen directive:
+          <programlisting role="shell">NameVirtualHost [IP]:[PORT]</programlisting>
+           for example:
+          <programlisting role="shell">NameVirtualHost 127.0.0.1:80</programlisting>
+        </listitem>
+      </itemizedlist>
+    </refsect2>
+    <refsect2 id="{@id install-linux-create-project}">
+      <title>create a new project</title>
+      You can now create a new picnic project. In the terminal, change to the directory where you want your new project to live, and execute "picnic -p &lt;project name&gt;":
+      <programlisting role="shell">
+      <itemizedlist>
+        <listitem>$ mkdir ~/Projects</listitem>
+        <listitem>$ cd ~/Projects</listitem>
+        <listitem>$ picnic -p mysite</listitem>
+      </itemizedlist>
+      </programlisting>
+      <para>
+        Check out the {@tutorial Pfw/GettingStarted.pkg getting started} section for next steps.
+      </para>
+    </refsect2>
+    </refsect1>
+    <refsect1 id="{@id install-windows}">
+      <title>Windows</title>
+      <refsect2 id="{@id install-obtain-zipfile}">
+        <title>obtain picnic from the zipfile</title>
+        <itemizedlist>
+          <listitem>Grab the latest source zipfile {@link http://code.google.com/p/picnicphp/downloads/list here}.</listitem>
+          <listitem>Expand the zipfile where you want picnic installed, for example "C:\Program Files\picnic-XXX".</listitem>
+        </itemizedlist>
+      </refsect2>
+      <refsect2 id="{@id install-windows-env}">
+        <title>add picnic and php environment variables:</title>
+        <itemizedlist>
+          <listitem>From the desktop, right-click My Computer and click Properties.</listitem>
+          <listitem>In the System Properties window, click on the Advanced tab.</listitem>
+          <listitem>In the Advanced section, click the "Environment Variables" button.</listitem>
+          <listitem>Ensure that you have the "PHPRC" variable in the "System variables" section. If not, add it to the "User variables" section by clicking the "New" button to add it. Its value should be the full path to your php install, for example "C:\Program Files\PHP".</listitem>
+          <listitem>In the "User variables" section, add the variable "PICNICRC". For its value, use the path to your picnic install, for example "C:\Program Files\picnic-XXX"</listitem>
+          <listitem>In the "User variables" section, add %PICNICRC\bin and %PHPRC% to the value of your PATH, delimited by a semicolon ';'.</listitem>
+          <listitem>Picnic commands are executed in the terminal. To open the terminal, go to /=Start->Run=/, type "cmd" and hit enter. Open the terminal now and type "picnic --help" to verify your installation.</listitem>
+          <listitem>If you intend to use virtual hosts, add the following to your httpd.conf (typically C:\Program Files\Apache Software Foundation\Apache2.x\conf\httpd.conf), just below the Listen directive:
+            <programlisting role="shell">
+              NameVirtualHost [IP]:[PORT]
+            </programlisting>
+            for example:
+            <programlisting role="shell">
+              NameVirtualHost 127.0.0.1:80
+            </programlisting>
+          </listitem>
+        </itemizedlist>
+      </refsect2>
+      <refsect2 id="{@id install-windows-create-project}">
+        <title>create a new project</title>
+        You can now create a new picnic project. In the terminal, change to the directory where you want your new project to live, and execute "picnic -p &lt;project name&gt;":
+        <programlisting>
+          <itemizedlist>
+            <listitem>$ mkdir "%USERPROFILE%\Desktop\Projects"</listitem>
+            <listitem>$ chdir "%USERPROFILE%\Desktop\Projects"</listitem>
+            <listitem>$ picnic -p mysite</listitem>
+          </itemizedlist>
+        </programlisting>
+        <para>
+          Check out the {@tutorial Pfw/GettingStarted.pkg getting started} section for next steps.
+        </para>
+      </refsect2>
+    </refsect1>
+  </refsect1>
+</refentry>
+

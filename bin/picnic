@@ -1,0 +1,141 @@
+#!/usr/bin/env php
+<?php
+
+ini_set('display_errors', 1);
+#ini_set('error_reporting', E_ERROR);
+
+$_PICNIC_CLASSPATHS = 1;
+$ds = DIRECTORY_SEPARATOR;
+$picnic_base = realpath(dirname(__FILE__)."{$ds}..{$ds}");
+require($picnic_base.'/lib/Pfw/Startup/Base.php');
+Pfw_Loader::loadClass('Pfw_Script_FileSystem');
+Pfw_Loader::loadClass('Pfw_Script_Message');
+Pfw_Loader::loadClass('Pfw_Script_CLI');
+Pfw_Loader::loadClass('Pfw_Script_Template');
+Pfw_Loader::loadClass('Pfw_Core_HostOS');
+
+$USAGE = <<<EOU
+usage: picnic -p project_name [-d dev_domain_name]\n
+EOU;
+
+$shortopts = "p:d:";
+$a = Pfw_Script_CLI::getopt($shortopts);
+
+if (empty($a['p'])) {
+    print "$USAGE";
+    exit();
+}
+
+echo "\n";
+
+if (!Pfw_Script_FileSystem::isValidDirname($a['p'])) {
+    $prj_name = ltrim(rtrim(Pfw_Script_FileSystem::makeValidDirname($a['p']), '_'), '_');
+    $prompt = "'{$a['p']}' is not a valid project name, use '{$prj_name}' instead?";
+    if (!Pfw_Script_CLI::promptYesNo($prompt, true)) {
+        Pfw_Script_Message::out("Choose a valid directory name for your project name and try again.\n");
+        exit();
+    }
+} else {
+    $prj_name = $a['p'];
+}
+
+$prj_base = getcwd();
+$new_prj = "{$prj_base}{$ds}{$prj_name}";
+$from_skel = "{$picnic_base}{$ds}skel";
+
+if (Pfw_Script_FileSystem::exists($new_prj)) {
+    Pfw_Script_Message::out("Project directory '$new_prj' already exists.\n");
+    exit();
+}
+
+if (empty($a['d'])) {
+    $a['d'] = "{$prj_name}.local";
+}
+
+if (!Pfw_Script_FileSystem::isValidDirname($a['d'])) {
+    $dev_domain = ltrim(rtrim(Pfw_Script_FileSystem::makeValidDirname($a['d']), '_'), '_');
+    $prompt = "'{$a['d']}' is not a valid domain, use '{$dev_domain}' instead?";
+    if (!Pfw_Script_CLI::promptYesNo($prompt, true)) {
+        Pfw_Script_Message::out("Choose a development domain name for your project name and try again.\n");
+        exit();
+    }
+} else {
+    $dev_domain = $a['d'];
+}
+
+// copy the new project skeleton
+Pfw_Script_Message::out("-- creating skeletion projects at: $new_prj... ");
+Pfw_Script_FileSystem::fullCopy($from_skel, $new_prj);
+
+// generate vhost conf file domain info + write file
+$vhost_template = "{$new_prj}{$ds}conf{$ds}vhost.conf.template";
+$vhost_file = "{$new_prj}{$ds}conf{$ds}vhost.conf";
+$document_root = "{$new_prj}{$ds}htdocs";
+$htaccess_file = "{$document_root}{$ds}.htaccess";
+
+Pfw_Script_Template::saveInstanceToFile(
+    $vhost_template,
+    $vhost_file,
+    array('DOMAIN_NAME' => $dev_domain, 'DOCUMENT_ROOT' => $document_root),
+    true
+);
+
+// generate environment file
+$env_template = "{$new_prj}{$ds}conf{$ds}environment.php.template";
+$env_file = "{$new_prj}{$ds}conf{$ds}environment.php";
+$picnic_lib_path = "{$picnic_base}{$ds}lib";
+
+Pfw_Script_Template::saveInstanceToFile(
+    $env_template,
+    $env_file,
+    array('PICNIC_LIB_PATH' => $picnic_lib_path),
+    true
+);
+
+// make runtime dirs writable
+$files = Pfw_Script_FileSystem::getFilesInDirRecursive("{$new_prj}{$ds}misc", true);
+foreach ($files as $file) {
+    chmod($file, 0777);
+}
+
+// make the scripts executeable
+$files = Pfw_Script_FileSystem::getFilesInDirRecursive("{$new_prj}{$ds}script", true);
+foreach ($files as $file) {
+    chmod($file, 0755);
+}
+
+
+Pfw_Script_Message::out("done!\n");
+$hosts_file = Pfw_Core_HostOS::getHostsFilePath();
+
+$notes = <<<EON
+NOTES:
+** Your default development domain name is $dev_domain. You can change this in $vhost_file
+** Your default environment is 'development'.
+
+To complete the installation of $dev_domain complete the following steps:
+
+For a virtual host installation
+1) Add the following line to the end of your httpd.conf:
+include "$vhost_file"
+
+For a .htaccss installation
+1a) For a htaccess installation, move the file: 
+"{$htaccess_file}.sample" to
+"{$htaccess_file}"
+1b) Point your web server DocumentRoot at your project's htdocs directory:
+"{$document_root}"
+
+2) Point $dev_domain to 127.0.0.1 in your hosts file ($hosts_file):
+127.0.0.1   $dev_domain
+
+3) Update {$new_prj}{$ds}conf{$ds}config.development.php with your project and database configuration.
+
+For more information see http://www.picnicphp.com/docs/gettingstarted.
+
+
+EON;
+
+echo $notes;
+
+?>

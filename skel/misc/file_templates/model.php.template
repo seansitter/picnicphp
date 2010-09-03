@@ -1,0 +1,52 @@
+<?php
+
+Pfw_Loader::loadClass('Pfw_Model');
+Pfw_Loader::loadClass('Pfw_Model_QueryObject');
+
+class ${CLASS_NAME} extends Pfw_Model
+{
+    protected static $_query_object;
+
+    public function setup() {
+        $this->setTable('${TABLE_NAME}');
+    }
+    
+    public function setupAssociations() 
+    {
+        // $this->hasMany('foos');
+        // $this->hasOne('bar');
+        // $this->belongsTo('thing');
+    }
+    
+    // called before an record is inserted or updated
+    // properties have been assigned to an instance 
+    public function beforeSaveFilter(&$properties, $save_type) { }
+    
+    public function formSetProperties($properties) {
+        // do any form data filtering here
+        parent::formSetProperties($properties);
+    }
+    
+    public function fetchSetProperties($properties) {
+        // do any db data filtering here
+        parent::fetchSetProperties($properties);
+    }
+    
+    /**
+     * Get an instance of a query object
+     * 
+     * @param Pfw_Db_Adapter $db instance of a db adapter
+     * @return ${CLASS_NAME}_QueryObject
+     */
+    public static function Q($db = null)
+    {
+        $qo = __CLASS__."_QueryObject";
+        return new $qo(__CLASS__, $db);
+    }
+}
+
+
+class ${CLASS_NAME}_QueryObject extends Pfw_Model_QueryObject
+{
+
+}

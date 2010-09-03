@@ -1,0 +1,125 @@
+#!/usr/bin/env php
+<?php
+
+$USAGE = <<<EOU
+usage: generate_model -m model_name [[-t table_name] -s]
+-d: generate a schema file\n
+EOU;
+
+$ds = DIRECTORY_SEPARATOR;
+
+$path = dirname(__FILE__);
+$startup_dir = realpath($path . "{$ds}..{$ds}startup");
+$conf_dir = realpath($path . "{$ds}..{$ds}conf");
+require("{$conf_dir}/environment.php");
+require("{$startup_dir}/prj_base.php");
+
+Pfw_Loader::loadClass('Pfw_Script_Message');
+Pfw_Loader::loadClass('Pfw_Script_Template');
+Pfw_Loader::loadClass('Pfw_Script_CLI');
+Pfw_Loader::loadClass('Pfw_Script_Migration');
+
+$shortopts = "m:t:dh";
+$a = Pfw_Script_CLI::getopt($shortopts, array('help'));
+
+if (empty($a['m']) or isset($a['h']) or isset($a['help'])) {
+    Pfw_Script_Message::out($USAGE);
+    exit();
+}
+
+$model_class = ucfirst(trim(rtrim($a['m'])));
+
+$match_rules = array(
+    array(
+        '/^[^A-Za-z]/',
+        'Model names must begin with an alpha character'
+    ),
+    array(
+        '/[\W]/',
+        'Model names must contain only alphanumeric characters'
+    ),
+    array(
+        '/\.php$/',
+        "Model names must not contain the word 'controller'"
+    )
+);
+
+foreach ($match_rules as $rule) {
+    if (preg_match($rule[0], $model_class)) {
+        echo("\n{$rule[1]}\n\n");
+        exit();
+    }
+}
+
+if (empty($a['t'])) {
+    $table_name = strtolower(pluralize($model_class));
+    $table_name = Pfw_Script_CLI::promptWithMessage("Choose a table name", $table_name);
+} else {
+    $table_name = $a['t'];
+}
+
+$model_filename = Pfw_Loader::getFilenameFromClassname($model_class);
+
+$model_dir = realpath(rtrim(rtrim($_PATHS['models'], '/'), $ds));
+$model_path = "{$model_dir}{$ds}{$model_filename}";
+
+$template_dir = realpath(rtrim(rtrim($_PATHS['misc'], '/'), $ds)."{$ds}file_templates");
+$model_template_path = "{$template_dir}{$ds}model.php.template";
+
+$unittest_dir = "{$model_dir}{$ds}test";
+$unittest_filename = "{$model_class}_Test.php";
+$unittest_path = "{$unittest_dir}{$ds}{$unittest_filename}";
+$unittest_template_path = "{$template_dir}{$ds}model_test.php.template";
+
+// generate the model
+if (Pfw_Script_FileSystem::exists($model_path)) {
+    if (!Pfw_Script_CLI::promptYesNo("File '$model_filename' already exists, replace?")) {
+        exit();
+    }
+}
+Pfw_Script_Template::saveInstanceToFile(
+    $model_template_path,
+    $model_path,
+    array(
+        'CLASS_NAME' => $model_class,
+        'TABLE_NAME' => $table_name
+    )
+);
+Pfw_Script_Message::out("created model: {$model_class} in file {$model_path}");
+
+// generate the unit test
+if (Pfw_Script_FileSystem::exists($unittest_path)) {
+    if (!Pfw_Script_CLI::promptYesNo("File '{$unittest_filename}' already exists, replace?")) {
+        exit();
+    }
+}
+Pfw_Script_Template::saveInstanceToFile(
+    $unittest_template_path,
+    $unittest_path,
+    array(
+        'CLASS_NAME' => $model_class,
+    )
+);
+Pfw_Script_Message::out("created unit test: {$unittest_path}");
+
+if (isset($a['s']) or (Pfw_Script_CLI::promptYesNo("Would you like to create a schema file?", false))) {
+    $ts = time();
+    $migration_filename = "{$ts}-create_{$table_name}.php";
+    $migration_dir = realpath(rtrim(rtrim($_PATHS['data'], '/'), $ds));
+    $migration_path = "{$migration_dir}{$ds}deltas{$ds}{$migration_filename}";
+
+    $template_dir = realpath(rtrim(rtrim($_PATHS['misc'], '/'), $ds)."{$ds}file_templates");
+    $migration_template_path = "{$template_dir}{$ds}model_create_migration.php.template";
+
+    Pfw_Script_Template::saveInstanceToFile(
+        $migration_template_path,
+        $migration_path,
+        array(
+            'TABLE_NAME' => $table_name
+            )
+    );
+    Pfw_Script_Message::out("created schema: {$migration_path}\n");
+}
+
+?>
+

@@ -1,0 +1,26 @@
+<?php
+
+// do migration
+$migrate = function() {
+$create_sql = <<<EOS
+CREATE TABLE `${TABLE_NAME}` (
+  `id` bigint(20) unsigned NOT NULL auto_increment,
+  PRIMARY KEY  (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+EOS;
+
+    Pfw_Db_Migrate::forward(array(
+        $create_sql
+    ));
+    return true;
+};
+
+// undo migration
+$undo = function() {
+    Pfw_Db_Migrate::back(array(
+        "DROP TABLE ${TABLE_NAME}"
+    ));
+    return true;
+};
+
+?>

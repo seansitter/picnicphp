@@ -1,0 +1,30 @@
+<VirtualHost *:80>
+ServerName ${DOMAIN_NAME}
+# ServerAdmin admin@${DOMAIN_NAME}
+
+# optionally, your pfw environment name can be set here
+# SetEnv PFW_ENVIRONMENT "development"
+
+AddType  application/x-httpd-php         .php
+
+## FILL IN DocumentRoot BELOW
+DocumentRoot "${DOCUMENT_ROOT}"
+<Directory "${DOCUMENT_ROOT}">
+  Options Indexes FollowSymLinks
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+</Directory>
+
+RewriteEngine on
+RewriteRule !\.(html|js|ico|gif|jpg|png|css)$ /bootstrap.php 
+RewriteRule ^(.*)\.v[0-9]+\.(css|js) $1.$2 [L]
+
+# if file does not have extension treat as php
+<FilesMatch "^[^.]*$">
+  ForceType application/x-httpd-php
+</FilesMatch>
+
+</VirtualHost>
+
+

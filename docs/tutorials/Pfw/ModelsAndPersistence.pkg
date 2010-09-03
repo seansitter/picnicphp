@@ -1,0 +1,27 @@
+<refentry id="{@id}">
+  <refnamediv>
+    <refname>Models and Persistence</refname>
+    <para>
+      Picnic ships with an extremely powerful and expressive object relational mapper.
+    </para>
+  </refnamediv>
+  <refsect1>
+    <title>Configuring The Database Route</title>
+    <para>
+      Before you can using Picnic persistence, you must configure your default database route. First, you need to create a development database on your mysql instance using your favorite mysql admin tool. For example, you may issue the following on the command line:
+      <programlisting>
+        mysite$ echo "CREATE DATABASE mysite_dev" | mysql -u root -p
+      </programlisting>
+    </para>
+    <para>
+      In your development config file, update the 'database' config variable with the parameters needed to connect to your development database. For example, update your config.development.php to the following:
+      {@example ModelsAndPersistence/database_config.php.1.ex}
+    </para>
+    <para>
+      This database route is configured as the default route, however Picnic is capable of handling multiple database routes.
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>Generating a New Model</title>
+  </refsect1>
+</refentry>

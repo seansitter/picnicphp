@@ -1,0 +1,79 @@
+<refentry id="{@id}">
+ <refnamediv>
+  <refname>Project Layout</refname>
+ </refnamediv>
+ <refsect1>
+<para><![CDATA[
+myproject/
+|-- app
+|   |-- controllers
+|   |   |-- ErrorController.php
+|   |   `-- HomeController.php
+|   |-- lib
+|   |   |-- Prj
+|   |   |   |-- Controller
+|   |   |   |   `-- Standard.php
+|   |   |   |-- Core
+|   |   |   |   `-- Base.php
+|   |   |   |-- Plugin
+|   |   |   |-- Smarty
+|   |   |   |   |-- Plugins
+|   |   |   |   `-- Standard.php
+|   |   |   `-- test
+|   |   `-- ThirdParty
+|   |-- models
+|   |   `-- test
+|   `-- views
+|       |-- error
+|       |   `-- 404.tpl
+|       |-- home
+|       |   `-- index.tpl
+|       |-- layouts
+|       |   `-- main.tpl
+|       `-- shared
+|-- batch
+|-- conf
+|   |-- config.default.php
+|   |-- config.development.php
+|   |-- config.production.php
+|   |-- config.test.php
+|   |-- environment.php
+|   |-- pfw_routes.php
+|   |-- plugins.xml
+|   |-- smarty.conf
+|   `-- vhost.conf
+|-- data
+|   `-- deltas
+|       `-- mysql-create_sessions.sql
+|-- htdocs
+|   |-- bootstrap.php
+|   |-- css
+|   |   `-- common.css
+|   |-- favicon.ico
+|   |-- img
+|   `-- js
+|       |-- common.js
+|       `-- prototype.js
+|-- misc
+|   |-- file_templates
+|   |   |-- controller.php.template
+|   |   |-- migration_create.sql.template
+|   |   |-- model.php.template
+|   |   |-- model_test.php.template
+|   |   `-- view_index.tpl.template
+|   |-- runtime
+|   |   |-- cache
+|   |   `-- templates_c
+|   `-- tmp
+|-- script
+|   |-- generate_controller
+|   |-- generate_model
+|   `-- plugin
+`-- startup
+   |-- prj_base.php
+   |-- prj_global_require.php
+   |-- prj_paths.php
+   `-- prj_startup.php
+]]></para>
+</refsect1>
+</refentry>

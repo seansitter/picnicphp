@@ -1,0 +1,150 @@
+<refentry id="{@id}">
+ <refnamediv>
+  <refname>Request Routing</refname>
+ </refnamediv>
+ <refsect1 id="{@id routes-and-modules}">
+   <para>
+     A route defines a method for mapping a class of urls to a controller and action, and possibly a set of named and unnamed variables from the url or request body that will be available to the controller. A module is a way to organize a collection of routes by similar function (for example administration). Controllers belonging to a module exist in a subdirectory of app/controllers. Every route must resolve to a controller and action in your project.
+   </para>
+   <para>
+     Picnic includes a flexible and sophisticated routing mechanism. The default routes should handle the most common situations, but custom routes can easily be defined. Urls within your site can also be generated against the defined routes using template helpers and convenience methods within your controller.
+   </para>
+ </refsect1>
+ <refsect1 id="{@id defining-routes}">
+   <title>The Route Config</title>
+   <refsect2>
+     <title>the $_pfw_routes variable</title>
+    <para>
+     The routes used by your project are defined in the file conf/pfw_routes.php. This file defines a variable named $_pfw_routes which which is a map from the route name to a route entry. The route entries are ordered from most to least specific. Each route entry is an array which contains:
+     <itemizedlist>
+       <listitem>The route pattern (the required url format for the route to match the request url)</listitem>
+       <listitem>A list of defaults for segment variables in the route definition</listitem>
+       <listitem>Conditions that contribute to determining whether the specific route is a match for the current request</listitem>
+     </itemizedlist>
+     </para>
+     <para>
+      A complete route entry might look like this:
+      {@example RequestRouting/default_action.php.1.ex}
+     </para>
+   </refsect2>
+   <refsect2>
+     <title>the $_pfw_modules variable</title>
+     <para>
+       The route config file (conf/pfw_routes.php) defines a second variable named $_pfw_modules, an array of strings which are the names of the valid controller modules for your project. A module is a unit of organization for the controllers of your project. Each module is a subdirectory of app/controllers which contains one more more controller source files.
+     </para>
+   </refsect2>
+  </refsect1>
+  
+  <refsect1>
+    <title>The Route Definition</title>
+     <para>
+    The segments of a route definition and url are separated by a forward slash '/'. In order for a route definition to match the request url, each segment of the route definition must match the request url from left to right. The rules for a match depend on the type of segment. There are three types of route segments: literals, variables and wildcards.
+     </para>
+   <refsect2>
+     <title>route segment literals</title>
+     <para>
+       A route segment literal is the simplest kind of route segment. Literals are strings which must match the corresponding url segment exactly. In the route definition example above (line 3), 'mystuff' is a route literal. A request url must begin with '/mystuff' in order for this segment to match.
+     </para>
+   </refsect2>
+   <refsect2>
+     <title>route segment variables</title>
+     <para>
+      A route segment variable is preceded by a colon ':' in the route definition. Certain rules apply in determining whether a segment variable matches the url segment. In the route definition example above (line 3), ':controller' and ':action' are route variables. A matching segment variable is considered part of the request environment and may be referenced by name in the controller. The value can be retrieved with the {@link Pfw_Request::getParam() Pfw_Request::getParam}($route_variable) method or the {@link Pfw_Controller_Standard::getParam() Pfw_Controller_Standard::getParam}($route_variable) method of your controller. See the "Rules For Matching Route Variables" below for more information.
+     </para>
+     <para>
+       The route variables ':controller' and ':action' are special reserved names which must matched one any successful route. The values these variables resolve to will be used by the mapper, {@link Pfw_Controller_Mapper_Standard}, to instantiate the controller and invoke its action method. The mapper resolves the controller class by capitalizing the value of :controller and appending 'Controller'. It resolved the action method within that controller by appending 'Action' to the lowercase value of the :action. For example if our url is /greeting/hello, a match against the 'default_action' route /:controller/:action from the example above would call the method 'helloAction()' on an instance off the class GreetingController in the file app/controller/GreetingController.php.
+     </para>
+   </refsect2>
+   <refsect2>
+     <title>route segment wildcards</title>
+     <para>
+       A route segment wildcard is a standalone asterisk '*' that may appear last in the route definition. If all preceding route segments have matched, the remaining url segments will be bundled together and matched. Note the wildcard in the example above. The request url segments matched by wildcard will be available as part of the request environment.
+     </para>
+   </refsect2>
+ </refsect1>
+ <refsect1>
+   <title>Rules For Matching Route Variables</title>
+   <para>
+     There are a handful of guidelines which make understanding the routing rules simpler. 
+   </para>
+   <para>
+     The router begins by matching literals and variable from as far as it can, left to right, segment by segment. If the route pattern is longer (has more segments) than the request url, the router will attempt to fill the remainder using route variable defaults. If a route is otherwise matched to a pattern, the final step is to apply the segment conditions, if they exist. If no matching route is found, the exception {@link Pfw_Exception_NoRoute} will be thrown. This exception can be caught and handled in a custom way in your startup/prj_startup.php file.
+   </para>
+   <refsect2>
+     <title>route variable defaults</title>
+     <para>
+       A route variable appearing in the route definition must always be matched, either directly or by  a default value. The array of default values is the second element of the route definition as you can see below:
+       {@example RequestRouting/default_action.php.1.ex}
+     </para>
+     <para>
+       A variable default has the effect of collapsing the remainder of the route, since segments following the defaulted variable would otherwise match in the place of the defaulted value. Thus, if your route requires a default in order to match, anything after it should either be wildcard or default.
+     </para>
+     <para>
+       A route variable may be given the default value <emphasis>null</emphasis>, in which case it is not required to appear in the request url. If it does appear, any route conditions will be evaluated against its value as would normally happen.
+     </para>
+     <para>
+       The :controller and :action variables must always have a value in the routes, but those values may come from the route defaults. In the 'default_action' route that is initially defined in your projects, the root url '/', :controller is defaulted to 'home' and :action is defaulted to :index.
+    </para>
+   </refsect2>
+   <refsect2>
+     <title>route variable conditions</title>
+     <para>
+        If a route is matched, the final step is to apply route conditions, if any exist. The array of conditions is the third element of the route definition as seen below:
+       {@example RequestRouting/default_action.php.1.ex}
+     </para>
+     <para>
+       The simplest for of conditions is an association between the variable and one or more values it can take. In the example above, the controller must be one of: 'home', 'account', or 'profile'. If the variable must be a single specific variable a simple 'variable' => 'value' condition will suffice.
+     </para>
+     <para>
+       The variable condition may also be a <emphasis>regular expression</emphasis> as seen below:
+       {@example RequestRouting/id_is_null_or_integers.php.1.ex}
+     </para>
+   </refsect2>
+ </refsect1>
+ <refsect1>
+   <title>Controller Modules</title>
+   <para>
+     A module is a unit of organization in your route structure which is represented by organizing your controllers in package. As with other picnic packages, this means all controllers in a module exist in a subdirectory of app/controllers. The name of the subdirectory will be the capitalized value of :module. The controller name will be in a file which is the capitalized value of :controller + 'Controller.php'. The class of the controller will be the capitalized value :module + '_' + the capitalized  :controller + 'Controller'. The views will be in app/views/:module/:controller. These details are handled for you if you use the controller generator.
+    </para>
+      <refsect2>
+        <title>a module example</title>
+        <para>
+        To create a greeting controller in the salutation module, use the command:
+       <programlisting>
+         mysite$ script/generate_controller -c Salutation_Greeting
+       </programlisting>
+     </para>
+     <para>
+    This will create the file app/controllers/Salutation/GreetingController.php which contains the class Salutation_GreetingController. The views for this controller will be in app/views/salutation/greeting. 
+     </para>
+     <para>
+     Now add the 'salutation' module to the $_pfw_modules array in conf/pfw_routes.php:
+     {@example RequestRouting/salutation_module.php.1.ex}
+     </para>
+     <para>
+     This module will be handled by the route 'default_module_action' that is enabled in your project in conf/pfw_routes.php by default:
+     {@example RequestRouting/default_module_action.php.1.ex}
+     </para>
+   </refsect2>
+ </refsect1>
+ <refsect1>
+   <title>Route Recipes</title>
+   <para>
+     Below are a handful of recipes your may find useful in aiding your understanding of how request urls are routed.
+   </para>
+   <para>
+     <emphasis>1) You want your controller in module, but you don't want the module to appear in the url:</emphasis>
+     {@example RequestRouting/implied_module.php.1.ex}
+   </para>
+   <para>
+     Then generate your controller:
+     <programlisting>
+       mysite$ ./script/generate_controller -c Mymodule_Home
+     </programlisting>
+   </para>
+   <para>
+     <emphasis>2) Your id can be either null or a string of integers:</emphasis>
+     {@example RequestRouting/id_is_null_or_integers.php.1.ex}
+   </para>
+ </refsect1>
+</refentry>

@@ -1,0 +1,21 @@
+<?php 
+
+require "../../../startup/prj_base.php";
+Pfw_Loader::loadClass('Pfw_UnitTest_PHPUnit_TestCase');
+Pfw_Loader::loadModel('${CLASS_NAME}');
+
+class ${CLASS_NAME}_Test extends Pfw_UnitTest_PHPUnit_TestCase
+{
+    protected function setup(){
+        // runs before every test
+    }
+
+    protected function tearDown(){
+        // runs after every test
+    }
+  
+    public function testSomething(){
+        // $this->assertEquals(true, true);
+        // $this->assertTrue(true);
+    }
+}

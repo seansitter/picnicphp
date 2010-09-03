@@ -1,0 +1,324 @@
+<refentry id="{@id}">
+  <refnamediv>
+    <refname>Templates and Views</refname>
+  </refnamediv>
+  <para>
+  Picnic uses an extended {@link http://www.smarty.net/ smarty} templating engine. Objects and scalar variables are assigned to templates within the controller. Templates are rewritten by the smarty engine into PHP files and the variables are evaluated at runtime. Smarty is extremely extensible, and we will only cover a small subset of its capabilities here. The reader is encouraged to read the {@link http://www.smarty.net/manual/en/ smarty documentation}, particularly the {@link http://www.smarty.net/manual/en/smarty.for.designers.php template designer documentation}.
+  </para>
+  <refsect1 id="{@id the-basics}">
+  <title>The Basics</title>
+    <refsect2 id="{@id template-directories}">
+      <title>template directories</title>
+      <para>
+  Templates should be created in a subdirectory of app/views named after the controller which displays them. When you generate a controller with the scripts/generate_controller command, this directory is created for you. Shared templates should be created in app/views/shared. Layouts belong in app/layouts.
+      </para>
+    </refsect2>
+    <refsect2 id="{@id prj-smarty-standard}">
+      <title>Prj_Smarty_Standard (your template engine class)</title>
+      <para>
+  Every controller has a singleton instance of the template engine which you can access by calling the getView() method on the controller. This singleton is an instance of the project-specific Smarty class Prj_Smarty_Standard (which extends the Picnic Smarty class Pfw_Smarty_Standard). Almost anything in Pfw_Smarty_Standard can be overridden in Prj_Smarty_Standard. 
+      </para>
+    </refsect2>
+    <refsect2 id="{@id var-expansion}">
+      <title>view variable assignment and expansion</title>
+      <para>
+        Variables are assigned to the template instance by calling its assign method. The first argument to assign is the name by     which the variable will be know in the template, the second argument is the variable itself. Variables appear between curly braces in the template are expanded. Objects my also be assigned to templates, and properties are accessed with the '-&gt;' operator as you would expect. Array members are accessed with the '.' operator.
+      </para>
+      <para>
+        The view is rendered by calling its display method. The display method expects the path to a template, relative to the  app/views directory. In app/controller/GreetingController.php:
+        {@example TemplatesAndViews/GreetingController.php.1.ex}
+      </para>
+      <para>
+        Variables placed between curly braces in the template will be expanded. In app/views/greeting/hello.tpl:
+      <programlisting>
+        <itemizedlist>
+          <listitem>Hello {$user->name}! Have a great day!</listitem>
+          <listitem>A great day in {$date.month} isn't it?</listitem>
+        </itemizedlist>
+      </programlisting>
+      </para>
+      <para>
+        <programlisting>
+          <itemizedlist>
+            <listitem>Hello sammy! Have a great day!</listitem>
+            <listitem>A great day in January isn't it?</listitem>
+          </itemizedlist>
+        </programlisting>
+      </para>
+    </refsect2>
+    <refsect2 id="{@id smarty-comments}">
+      <title>comments</title>
+      <para>
+        Smarty comments are written within {* and *} tags:
+        <programlisting>
+          <itemizedlist>
+            <listitem>{* hey this is a comment and will not be rendered *}</listitem>
+            <listitem>This is a non-comment line for {$nickname}</listitem>
+          </itemizedlist>
+        </programlisting>
+        <para>
+          <programlisting>
+            This is a non-comment line for sammy
+          </programlisting>
+        </para>
+      </para>
+    </refsect2>
+  </refsect1>
+  <refsect1 id="{@id smarty-constructs}">
+    <title>Smarty Constructs</title>
+    <refsect2 id="{@id smarty-loops-conds}">
+      <title>looping and conditionals</title>
+      <para>
+      Smarty supports conditional constructs {if}, {elseif} and {else} as well as looping construct {foreach} and {foreachelse}. Every {if} and {foreach} block must be closed with a corresponding {/if} or {/foreach}. The {foreach} tag requires the 'from' and 'item' arguments, where 'from' is the array you are looping through and 'item' is the name of the variable that contains the current element, for example:
+      {@example TemplatesAndViews/smarty_looping.tpl.1.ex}
+      </para>
+      <para>
+  See the smarty documentation for conditionals {@link http://www.smarty.net/manual/en/language.function.if.php if/elseif/else} and {@link http://www.smarty.net/manual/en/language.function.foreach.php foreach} for more information.
+      </para>
+    </refsect2>
+    <refsect2 id="{@id smarty-functions}">
+      <title>helper functions</title>
+      <para>
+  Like all smarty directives, functions occur withing curly { } braces. Smarty functions are essentially aliases of php functions and have named arguments which are passed as an array to the linked php function. We will take a look at several built in functions, such as {include}.
+      </para>
+    </refsect2>
+    <refsect2 id="{@id smarty-block-functions}">
+      <title>block functions</title>
+      <para>
+        Block function are like standard functions, except that they act on a block of text within the template, for example:
+        <programlisting>
+          {link_to controller="invoice" action="show" id="25"}invoice link{/link_to}
+        </programlisting>
+      </para>
+      <para>
+        produces the html:
+        <programlisting>&lt;a href="/greeting/show/25"&gt;invoice link&lt;/a&gt;</programlisting>
+      </para>
+    </refsect2>
+    <refsect2 id="{@id smarty-modifiers}">
+      <title>modifiers</title>
+      <para>
+        Modifiers are special function which filter a variable during expansion. For example:
+        <programlisting>
+          <itemizedlist>
+            <listitem>{* assuming $state = "california" *}</listitem>
+            <listitem>{$state|capitalize}</listitem>
+          </itemizedlist>
+        </programlisting>
+      </para>
+      <para>
+        produces:
+        <programlisting>California</programlisting>
+      </para>
+      <para>
+        You can learn more about the built in modifiers {@link http://www.smarty.net/manual/en/language.modifiers.php in the smarty documentation}.
+      </para>
+    </refsect2>
+  </refsect1> 
+  <refsect1 id="{@id partials-and-layouts}">
+    <title>Using Partials and Layouts</title>
+    <refsect2>
+      <title>partials</title>
+      <para>
+    Most of the time, it is best to break up your templates into a number of reusable constituent templates called partials. For example, the global navigation, the display of a user's profile, or a comment box may be well suited for partial templates. Partials are included in their parent template by way of the {include file="filename.tpl"} smarty function. Partials should be placed in the same directory as their parent template, with the exception of globally useful partials such as navigation, which should be place in the apps/views/shared directory. All variables assigned to the parent are available in the included template, and variables in the parent template my be assigned into the scope of the included template by passing them as arguments to the include function.
+      </para>
+      <para>
+        For example, take a hypothetical apps/views/greeting/hello.tpl:
+        {@example TemplatesAndViews/hello.tpl.1.ex}
+     </para>
+     <para>
+        With the hypthetical partial apps/views/shared/comment.tpl:
+        {@example TemplatesAndViews/comment.tpl.1.ex}
+     </para>
+     <para>
+    For more information about the include function see the {@link http://www.smarty.net/manual/en/language.function.include.php smarty documentation}.
+    </para>
+    </refsect2>
+    <refsect2 id="{@id layouts}">
+      <title>layouts</title>
+      <para>
+        Layouts allow you to automatically render a body template within a containing template. Layouts are are no different than normal templates, except that they contain a call to the helper function {display_layout_body}. Layout templates should be placed in the app/views/layouts directory, for example:
+      {@example TemplatesAndViews/layouts.tpl.1.ex}
+      </para>
+      <para>
+        You can render with layouts in 2 ways:
+        <itemizedlist>
+          <listitem>
+            On each action, pass an array with keys that point to the layout template and body template like this:
+          </listitem>
+        </itemizedlist>
+        {@example TemplatesAndViews/display_layout.php.1.ex}
+        <itemizedlist>  
+          <listitem>
+            In your controller's constructor, set the default layout on the view instance using the setDefaultLayout method like this: </listitem>
+        </itemizedlist>
+        {@example TemplatesAndViews/default_layout.php.1.ex}
+      </para>
+      <para>
+    You can set the default layout for <emphasis>all</emphasis> actions by calling setDefaultLayout in the constructor of Prj_Controller_Standard. You can then override the default on in each controller with another call to setDefaultLayout in the constructor, or unset it at the controller or action level by calling clearDefaultLayout on the view.
+      </para>
+    </refsect2>
+  </refsect1>
+  <refsect1 id="{@id js-and-css-helpers}">
+    <title>Working With JavaScript And CSS</title>
+    <refsect2 id="{@id common-js-css}">
+      <title>common.css, common.js</title>
+      <para>
+    A newly created project will include the resources common.css and common.js by default. Picnic recommends you place your css styling and js code in these files. The inclusion of these files takes place in Prj_Smarty_Standard and can be renamed or removed in that class. The prototype javascript library is also included with Picnic and can be included in your project using the method below.
+      </para>
+    </refsect2>
+    <refsect2 id="{@id add-new-js-css}">
+      <title>adding new css and js links</title>
+      <para>
+    Picnic adds a number of methods to smarty for working with JavaScript and css. These methods make it easy to include or exclude js and css files at the action, controller, or global level. They include methods on the template engine instance and helper methods for rendering the proper resource links within the page.
+      </para>
+      <para>
+    Picnic extends Smarty with the {@link Pfw_Smarty_Standard::addJsLink()} and {@link Pfw_Smarty_Standard::addCssLink()} methods. The first argument to these methods is an alias by which that resource can be conveniently accessed at a later time (for example, if you want to exclude it from a page). The second argument is the resource name itself. Picnic will automatically prepend this argument with the path to the css directory from the root directory, unless the resource is external to the site, in which case a full url required for this argument. The third argument is an array of name-value pairs which will be passed through as attributes on the html element (for the 'media' attribute on css, for example). The last argument indicates whether this resource is external to the site. 
+      </para>
+      <para>
+    The CSS and JavaScript links are rendered in your template by calling the {display_css_links} and {display_css_links} methods. These method calls should be placed in the &lt;head&gt; section of your layout or top level template.
+      </para>
+      <para>
+    CSS and JavaScript resources can be added at the controller level (in its constructor), and the project level (in the contstructor for Prj_Controller_Standard), or at the action level. They can also be removed at any level by calling the {@link Pfw_Smarty_Standard::deleteCssLink()}/{@link Pfw_Smarty_Standard::deleteJsLink()} methods and passing them the resource alias.
+      </para>
+      <para>
+    If you have configured a LINKREL_REV in conf/smarty.conf, a version number will be stamped into your css and jss links in the html. This should be incremented for any release which updates any of these files, and is meant to invalidate browser and content distribution network (CDN) caches. Here are some examples:
+      </para>
+      <para>
+        In app/lib/Prj/Controller/Standard.php, add a global css resource:
+        {@example TemplatesAndViews/Prj_Controller_Standard.php.1.ex}
+      </para>
+      <para>
+        In app/controllers/GreetingController.php, add a local CSS resource:
+        {@example TemplatesAndViews/GreetingController.php.2.ex}
+      </para>
+      <para>
+        In the app/views/greeting.tpl template, render the css and js links:
+        {@example TemplatesAndViews/greeting.tpl.1.ex}
+      </para>
+      <para>
+        The final output looks like this:
+        {@example TemplatesAndViews/greeting.tpl.out.1.ex}
+      </para>
+    </refsect2>
+  </refsect1>
+  <refsect1 id="{@id picnic-helpers}">
+    <title>Picnic Helper Functions</title>
+    <para>
+    Picnic extends Smarty with a handful of useful helper functions. 
+    </para>
+    <refsect2 id="{@id link-to-url-for}">
+      <title>{link_to} and {url_for}</title>
+      <para>
+        Picnic provides the helper functions {link_to} and {url_for} to generate parameterized urls against your project's request routes. {link_to} is a block function which generates a complete link for everything between {link_to} and {/link_to}. {url_for} generates a standalone url suitable for display or as a form action. The route is supplied as an argument or if not supplied defaults to 'default_action', and other arguments are matched directly against route parameters. Any unmatched arguments on the route will be passed through to the query string.
+      </para>
+      <para>
+        <programlisting>
+          <itemizedlist>
+            <listitem>{link_to controller="greeting" action="hello" test="ok" route="default_action" attr.class="highlight"}my link{/link_to}</listitem>
+            <listitem>&lt;form action="{url_for controller="greeting" action="say"}"&gt;&lt;/form&gt;</listitem>
+          </itemizedlist>
+        </programlisting>
+      </para>
+      <para>
+        <programlisting>
+          <itemizedlist>
+            <listitem>&lt;a href="/greeting/hello?test=ok" class="highlight"&gt;my link&lt;/a&gt;</listitem>
+            <listitem>&lt;form action="/greeting/say"&gt;&lt;/form&gt;</listitem>
+          </itemizedlist>
+        </programlisting>
+      </para>
+    </refsect2>
+    <refsect2 id="{@id objp}">
+      <title>{@objp}</title>
+      <para>
+        {@objp} is a modifier for debugging which wraps &lt;pre>&lt;/pre>; tags around a var_dump of your variable and outputs it to the page. The css class of the &lt;pre> will is 'pfw-objp'. It is important to prefix the call to objp with the '@' symbol. The reason for this is related to how Smarty treats modifier arguments. If no '@' is prepended and the argument is an array, Smarty will pass each array value to the modifier iteratively. Using '@' causes Smarty to operate on the array as a whole.
+      </para>
+      <para>
+        In a controller action:
+        {@example TemplatesAndViews/AnyController.php.1.ex}
+      </para>
+      <para>
+        <programlisting>{$arr|@objp}</programlisting>
+      </para>
+    </refsect2>
+    <refsect2 id="{@id alert-helpers}">
+      <title>{display_alerts}, {display_notices}, {display_errors}</title>
+      <para>
+  These three functions display notices ({display_notices}), errors ({display_errors}), or both ({display_alerts}) set by calls to Pfw_Alert::addError(string $message, $follows_redir=false) or Pfw_Alert::addNotice(string $message, $follows_redir=false) respectively. The second argument to these functions determines whether or not the alert message will follow a redirect. If true, the alerts will be added to the users session and shown on page which they are redirected to, providing there is a call to the {display_*} function on that page's template.
+      </para>
+      <para>
+        The function calls to display the alerts should be place anywhere you would expect a notice or error to be shown.
+        {@example TemplatesAndViews/AnyController.php.2.ex}
+      </para>
+      <para>
+        <programlisting>
+          <itemizedlist>
+            <listitem>{display_errors}</listitem>
+            <listitem>you got an error message!</listitem>
+          </itemizedlist>
+        </programlisting>
+      </para>
+      <para>
+        <programlisting>
+          <itemizedlist>
+            <listitem>something went wrong</listitem>
+            <listitem>you got an error message!</listitem>
+          </itemizedlist>
+        </programlisting>
+      </para>
+  </refsect2>
+  <refsect2 id="{@id doctype-helper}">
+    <title>{display_doctype type='XHTML11'}</title>
+    <para>
+    The {display_doctype} function renders an html DOCTYPE directive and should be the first item (before the &lt;html&gt; element) in a top level template or layout. Valid types include: 'HTML5', 'XHTML11', 'XHTML_BASIC1', 'XHTML1_STRICT', 'XHTML1_TRANSITIONAL', 'XHTML1_FRAMESET', 'HTML4_STRICT', 'HTML4_TRANSITIONAL', 'HTML4_TRANSITIONAL_QUIRKS', 'HTML4_FRAMESET'.
+    </para>
+  </refsect2>
+  </refsect1>
+  <refsect1 id="{@id your-own-helpers}">
+    <title>Creating Your Own Helpers</title>
+    <para>
+    Its actually very easy to create your own helpers plugins. Several types of plugins are available, and they are documented in detail in the   {@link http://www.smarty.net/manual/en/plugins.php smarty plugin documentation}. The most common are covered below. Some of the documentation below is copied from the {@link http://www.smarty.net/manual/en smarty manual}.
+    </para>
+    <refsect2 id="{@id your-own-modifiers}">
+      <title>modifiers</title>
+      <para>
+        For more information on creating modifiers, see the {@link http://www.smarty.net/manual/en/plugins.modifiers.php smarty modifier plugin documentation}.
+      <itemizedlist>
+        <listitem>Create a new file in lib/Prj/Smarty/Plugins named block.<emphasis>name</emphasis>.php</listitem>
+        <listitem>In this file, create a function with the signature: function smarty_block_<emphasis>name</emphasis>(mixed $var, [mixed $param1, ...])</listitem>
+        <listitem>The first parameter to the modifier plugin is the value on which the modifier is to operate. The rest of the parameters are optional, depending on what kind of operation is to be performed.</listitem>
+        <listitem>return the modified $var</listitem>
+      </itemizedlist>
+      </para>
+    </refsect2>
+    <refsect2 id="{@id your-own-functions}">
+      <title>functions</title>
+      <para>
+    For more information on template functions, see the {@link http://www.smarty.net/manual/en/plugins.functions.php smarty function plugin documentation}.
+      <itemizedlist>
+        <listitem>Create a new file in lib/Prj/Smarty/Plugins named function.<emphasis>name</emphasis>.php</listitem>
+        <listitem>In this file, create a function with the signature: function smarty_function_<emphasis>name</emphasis> (array $params, object &amp;$smarty)</listitem>
+        <listitem>All attributes passed to template functions from the template are contained in the $params as an associative array.</listitem>
+        <listitem>The template engine instance itself is passed in as the &amp;$smarty variable.</listitem>
+        <listitem>The output (return value) of the function will be substituted in place of the function tag in the template, eg the {fetch} function. Alternatively, the function can simply perform some other task without any output, eg the {assign} function.</listitem>
+      </itemizedlist>
+      </para>
+    </refsect2>
+    <refsect2 id="{@id your-own-modifiers}">
+      <title>block functions</title>
+      <para>
+    For more information on template functions, see the {@link http://www.smarty.net/manual/en/plugins.block.functions.php smarty block function plugin documentation}.
+      <itemizedlist>
+        <listitem>Create a new file in lib/Prj/Smarty/Plugins named block.<emphasis>name</emphasis>.php</listitem>
+        <listitem>In this file, create a function with the signature: function smarty_block_<emphasis>name</emphasis>(array $params, mixed $content, object &amp;$smarty, boolean &amp;$repeat)</listitem>
+        <listitem>By default your function implementation is called twice by Smarty: once for the opening tag, and once for the closing tag. (See $repeat below on how to change this.)</listitem>
+        <listitem>Only the opening tag of the block function may have attributes. All attributes passed to template functions from the template are contained in the $params variable as an associative array. The opening tag attributes are also accessible to your function when processing the closing tag.</listitem>
+        <listitem>The template engine instance itself is passed in as the &amp;$smarty variable.</listitem>
+        <listitem>The value of the $content variable depends on whether your function is called for the opening or closing tag. In case of the opening tag, it will be NULL, and in case of the closing tag it will be the contents of the template block. Note that the template block will have already been processed by Smarty, so all you will receive is the template output, not the template source.</listitem>
+        <listitem>The parameter $repeat is passed by reference to the function implementation and provides a possibility for it to control how many times the block is displayed. By default $repeat is TRUE at the first call of the block-function (the opening tag) and FALSE on all subsequent calls to the block function (the block's closing tag). Each time the function implementation returns with $repeat being TRUE, the contents between {func}...{/func} are evaluated and the function implementation is called again with the new block contents in the parameter $content.</listitem>
+      </itemizedlist>
+    </para>
+    </refsect2>
+  </refsect1>
+</refentry>

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+PICNIC_BIN=`dirname $0`
+PICNIC_DIR="$PICNIC_BIN/.."
+PICNIC_SITE_DIR="$PICNIC_DIR/docs/htdocs"
+PICNIC_TUT_DIR="$PICNIC_DIR/docs/tutorials"
+PICNIC_EX_DIR="$PICNIC_DIR/docs/examples"
+PICNIC_LIB_DIR="$PICNIC_DIR/lib/Pfw"
+PICNIC_PHPDOC_DIR="$PICNIC_DIR/docs/phpdoc"
+
+args=`getopt t: $*`
+for i
+do
+  case "$i" in
+        -t) shift; PICNIC_SITE_DIR=$1; shift;;
+  esac
+done
+
+rm -rf $PICNIC_SITE_DIR
+phpdoc -s -o HTML:Picnic:picnic \
+  -d $PICNIC_LIB_DIR,$PICNIC_TUT_DIR \
+  -t $PICNIC_SITE_DIR \
+  -i /test/* \
+  -po Pfw \
+  -dn Pfw \
+  -ed $PICNIC_EX_DIR \
+  --templatebase $PICNIC_PHPDOC_DIR

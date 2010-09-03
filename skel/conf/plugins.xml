@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugins>
+<plugin name="undo-magic-quotes" class="Pfw_Plugin_UndoMagicQuotes"></plugin>
+</plugins>

@@ -1,0 +1,110 @@
+#!/usr/bin/env php
+<?php
+
+$USAGE =<<< EOU
+usage: generate_controller -c controller_name [-h]\n
+EOU;
+
+$ds = DIRECTORY_SEPARATOR;
+$path = dirname(__FILE__);
+$startup_dir = realpath($path . "{$ds}..{$ds}startup");
+$conf_dir = realpath($path . "{$ds}..{$ds}conf");
+require("{$conf_dir}{$ds}environment.php");
+require("{$startup_dir}{$ds}prj_base.php");
+
+Pfw_Loader::loadClass('Pfw_Script_CLI');
+Pfw_Loader::loadClass('Pfw_Script_Message');
+Pfw_Loader::loadClass('Pfw_Script_FileSystem');
+Pfw_Loader::loadClass('Pfw_Script_Template');
+
+$shortopts = "c:h";
+$a = Pfw_Script_CLI::getopt($shortopts, array('help'));
+
+if (empty($a['c']) or isset($a['h']) or isset($a['help'])) {
+    Pfw_Script_Message::out($USAGE);
+    exit();
+}
+
+$controller_class = ucfirst(trim(rtrim($a['c'])));
+
+$match_rules = array(
+    array(
+        '/^[^A-Za-z]/',
+        'Controller names must begin with an alpha character'
+    ),
+    array(
+        '/[\W]/',
+        'Controller names must contain only alphanumeric characters'
+    ),
+    array(
+        '/[Cc]ontroller/',
+        "Controller names must not contain the word 'controller'"
+    ),
+    array(
+        '/\.php$/',
+        "Controller names must not contain the word 'controller'"
+    )
+);
+
+foreach ($match_rules as $rule) {
+    if (preg_match($rule[0], $controller_class)) {
+        Pfw_Script_Message::out($rule[1]);
+        exit();
+    }
+}
+
+// the base dir for both the view files and controller
+$basedir = strtolower(rtrim(Pfw_Loader::getFilenameFromClassname($controller_class), '.php'));
+
+// the controller class name
+$controller_class .= "Controller";
+// the filename for the controller
+$controller_filename = Pfw_Loader::getFilenameFromClassname($controller_class);
+
+$ds = DIRECTORY_SEPARATOR;
+$controller_dir = rtrim(rtrim($_PATHS['controllers'], '/'), $ds);
+$controller_path = "{$controller_dir}{$ds}{$controller_filename}";
+
+$template_dir = rtrim(rtrim($_PATHS['misc'], '/'), $ds)."{$ds}file_templates";
+$controller_template_path = "{$template_dir}{$ds}controller.php.template";
+
+$view_dir = rtrim(rtrim($_PATHS['views'], '/'), $ds);
+$view_filename = "index.tpl";
+$view_rel_path = "{$basedir}{$ds}{$view_filename}";
+$view_path = "{$view_dir}{$ds}{$basedir}{$ds}{$view_filename}";
+
+$view_template_path = "{$template_dir}{$ds}view_index.tpl.template";
+
+// generate the controller
+if (Pfw_Script_FileSystem::exists($controller_path)) {
+    if (!Pfw_Script_CLI::promptYesNo("File '{$controller_filename}' already exists, replace?")) {
+        exit();
+    }
+}
+Pfw_Script_Template::saveInstanceToFile(
+    $controller_template_path,
+    $controller_path,
+    array(
+        'CLASS_NAME' => $controller_class,
+        'INDEX_VIEW_PATH' => $view_rel_path
+    )
+);
+Pfw_Script_Message::out("created controller: {$controller_class} in file: {$controller_filename}");
+
+// generate the view
+if (Pfw_Script_FileSystem::exists($view_path)) {
+    if (!Pfw_Script_CLI::promptYesNo("File '{$view_filename}' already exists, replace?")) {
+        exit();
+    }
+}
+Pfw_Script_Template::saveInstanceToFile(
+    $view_template_path,
+    $view_path,
+    array(
+        'CLASS_NAME' => $controller_class,
+        'INDEX_VIEW_PATH' => $view_rel_path
+    )
+);
+Pfw_Script_Message::out("created view: {$view_rel_path}\n");
+
+?>

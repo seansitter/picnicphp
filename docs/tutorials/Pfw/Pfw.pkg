@@ -1,0 +1,22 @@
+<refentry id="{@id}">
+  <refnamediv>
+    <refname>Welcome</refname>
+  </refnamediv>
+  <refsect1 id="{@id intro}">
+    <para>
+Picnic is a PHP {@link http://en.wikipedia.org/w/index.php?title=Model–view–controller&oldid=342317561 MVC framework} designed for simplicity and rapid innovation while promoting long term scalability. Picnic combines a fast, expressive template language, flexible request routing, and a powerful and concise ORM which makes persistence a snap. Convenience helpers for form and data validation are built-in timesavers. Support for multiple database routes, association strategies, and integrated caching simplify core scalability challenges as your site grows.
+    </para>
+  </refsect1>
+  <refsect1 id="{@id whatnext}">
+    <title>what next</title>
+    <para>
+  Follow the {@tutorial Pfw/Installation.pkg installation instructions}, then head over to the {@tutorial Pfw/GettingStarted.pkg getting started} section to get the ball rolling.
+    </para>
+  </refsect1>
+  <refsect1 id="{@id wheretogo}">
+    <title>where to go for help</title>
+    <para>
+  First make sure your issue is not covered in this manual. If you can't find what you are looking for here, check out the {@link http://groups.google.com/group/picnicphp?msg=new&lnk=gcis Picnic Group} for general Picnic questions, or the  {@link http://groups.google.com/group/picnicphp-dev?msg=new&lnk=gcis Picnic Developers Group} for bug reports and feature discussions.
+    </para>
+  </refsect1>
+</refentry>

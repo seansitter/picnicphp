@@ -1,0 +1,9 @@
+<html>
+    <head>
+    {display_css_links}
+    {display_js_links}
+    </head>
+<body>
+....
+</body>
+</html>

@@ -1,0 +1,71 @@
+<refentry id="{@id}">
+  <refnamediv>
+    <refname>Controllers and Actions</refname>
+  </refnamediv>
+  <para>
+For all of the lead-up, controllers and actions themselves are actually very simple. There is really nothing special or magical about an action iteself. Think of it simply as a container for your application logic for a specific class of requests. The controller provides some context and environment to make writing that logic convenient and intuitive.
+  </para>
+  <refsect1>
+    <title>Generating a New Controller</title>
+    <para>
+    Generating a new controller with the controller generator is extremely easy. For example, to generate a new controller named 'GreetingController', issue the command from your project root directory:
+    <programlisting>
+      mysite$ ./script/generate_controller -c greeting
+    </programlisting>
+    </para>
+    <para>
+      This will create a new file named app/controllers/GreetingController.php containing the class GreetingController. It will create templates for your new controller in app/views/greeting. For more details on how urls are routed to your new controller, see the chapter {@tutorial Pfw/RequestRouting.pkg}.
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>Accessing the Template Engine</title>
+    <para>
+The controller maintains a template engine singleton which you can access with the {@link Pfw_Controller_Standard::getView() getView()} method. Global template variables can be created by accessing the template singleton in the controller's constructor and assigning variables to it. The default layout for the controller can also be set by calling the {@link Pfw_Smarty_Standard::setDefaultLayout() Pfw_Smarty_Standard::setDefaultLayout}(string $template) method on the view instance. See the section {@link http://www.picnicphp.com/Pfw/tutorial_TemplatesAndViews.pkg.html#partials-and-layouts partials in layouts} in the {@tutorial Pfw/TemplatesAndViews.pkg} chapter for more information.
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>Controller Convenience Methods</title>
+    <para>
+      The controller provides a number of convenience methods to your actions:
+    </para>
+    <refsect2>
+      <title>{@link Pfw_Controller_Standard::getParam() getParam}(string $name|int $index), {@link Pfw_Controller_Standard::getParam() getParams()}</title>
+      <para>
+      The {@link Pfw_Controller_Standard::getParam() getParam} method gets a variable associated with the request from route segments, form data, query string data, or default variables associated with the route (or any and all of those). The {@link Pfw_Controller_Standard::getParams() getParams} method returns an associative array of all variables related to this request.
+      </para>
+    </refsect2>
+    <refsect2>
+      <title>{@link Pfw_Controller_Standard::isAjax() isAjax()}, {@link Pfw_Controller_Standard::isGet() isGet()}, {@link Pfw_Controller_Standard::isPost() isPost()}</title>
+      <para>
+        These methods return a boolean reflecting the request method.
+      </para>
+    </refsect2>
+    <refsect2>
+      <title>{@link Pfw_Controller_Standard::urlFor() urlFor}(array $route_params, string $route_name)</title>
+      <para>
+This method uses the router to return a url for the given route parameters. Any parameters associated with a route segment will be replaced into that segment. All other parameters will end up in the query string.
+      </para>
+    </refsect2>
+    <refsect2>
+      <title>{@link Pfw_Controller_Standard::redirectTo() redirectTo}(array $route_params, string $route_name)</title>
+      <para>
+        This method is similar to urlFor, except that it will redirect to the generated url.
+      </para>
+    </refsect2>
+    <refsect2>
+      <title>{@link Pfw_Controller_Standard::redirect() redirect}(string $url)</title>
+      <para>
+        This method redirects to the given fully qualified canonical url.
+      </para>
+    </refsect2>
+  </refsect1>
+  <refsect1>
+    <title>Where Do I Include My Models and Library Classes?</title>
+    <para>
+Depending on where your model is required, you can include it at several different levels.
+If your model or class is useful for the multiple actions within the controller, you might include it at the file level direction above the class declaration.
+If your model or class is only useful for a specific action, you can include it within that action.
+You can also include it at the block level (such as within a conditional) if it is only used under specific conditions.
+    </para>
+  </refsect1>
+</refentry>

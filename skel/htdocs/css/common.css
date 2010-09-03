@@ -1,0 +1,63 @@
+body {
+    padding: 10px;
+    margin: 0px;
+}
+
+textarea.pfw-error,
+input.pfw-error,
+select.pfw-error {
+    border: 1px solid #FF0000;
+}
+
+textarea.pfw-notice,
+input.pfw-notice,
+select.pfw-notice {
+    border: 1px solid #26722D;
+}
+
+ul.pfw-alert, ul.pfw-obj-error {
+    padding: 5px 8px;
+    margin-bottom: 10px;
+}
+
+ul.pfw-error, ul.pfw-obj-error {
+    border: 2px solid #CC2222;
+    background-color: #FFDDDD;
+}
+
+ul.pfw-notice {
+    border: 2px solid #26722D;
+    background-color: #A4E7A0;
+}
+
+ul.pfw-alert li, ul.pfw-obj-error li {
+    list-style-position: inside;
+    list-style: none;
+    font-size: 1.2em;   
+}
+
+.pfw-objp {
+    text-align: left;
+    font-family: monospace;
+    background-color: #E0E0E0;
+    border: 1px solid #CCC;
+    margin: 10px;
+    padding: 10px;
+}
+
+/** clearfix hack **/
+.clearfix:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+.clearfix {
+    display: inline-block;
+}
+/* Hides from IE-mac \*/
+* html .clearfix {height: 1%;}
+.clearfix {display: block;}
+/* End hide from IE-mac */
+/** end clearfix hack **/

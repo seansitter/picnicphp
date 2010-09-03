@@ -1,0 +1,1 @@
+$view->display(array('layout' => 'layouts/mylayout.tpl', 'body' => 'greeting/hello.tpl'));

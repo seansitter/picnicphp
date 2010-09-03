@@ -1,0 +1,19 @@
+<?php
+
+// do migration
+$migrate = function() {
+    Pfw_Db_Migrate::forward(array(
+        // migrate sql statements here
+    ));
+    return true;
+};
+
+// undo migration
+$undo = function() {
+    Pfw_Db_Migrate::back(array(
+        // undo sql statements here
+    ));
+    return true;
+};
+
+?>

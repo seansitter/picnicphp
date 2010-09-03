@@ -1,0 +1,304 @@
+#!/usr/bin/env php
+<?php
+
+$USAGE =<<< EOU
+usage: migrate [-f [forward steps]] | [-b [backward steps]] [-l] [--dry-run]
+-l: list pending migrations\n
+--dry-run: show me what would be applied without applying changes
+EOU;
+
+$ds = DIRECTORY_SEPARATOR;
+
+$path = dirname(__FILE__);
+$startup_dir = realpath($path . "{$ds}..{$ds}startup");
+$conf_dir = realpath($path . "{$ds}..{$ds}conf");
+require("{$conf_dir}/environment.php");
+require("{$startup_dir}/prj_base.php");
+Pfw_Loader::loadClass('Pfw_Script_Migration');
+Pfw_Loader::loadClass('Pfw_Script_FileSystem');
+Pfw_Loader::loadClass('Pfw_Db_Router_Standard');
+Pfw_Loader::loadClass('Pfw_Model');
+
+$shortopts = "f:b:h:l";
+$longopts = array("dry-run", "dryrun", "help");
+$a = Pfw_Script_CLI::getopt($shortopts, $longopts);
+
+$dryrun = (isset($a['dry-run']) or isset($a['dryrun'])) ? true : false;
+
+if ($dryrun) {
+    Pfw_Script_Message::out(
+        "==============================================\n".
+        "Running dryrun, changes will not be applied...\n".
+        "==============================================\n"
+    );
+}
+
+if (isset($a['h']) or isset($a['help'])) {
+    Pfw_Script_Message::out($USAGE);
+    exit(0);
+}
+
+if (isset($a['f']) and isset($a['b'])) {
+    Pfw_Script_Message::out("-f and -b options are mutually exclusive");
+    Pfw_Script_Message::out($USAGE);
+    exit(1);
+}
+
+// list pending files
+if (isset($a['l'])) {
+    list($files, $last_rev) = get_remaining_files();
+    if (empty($files)) {
+        Pfw_Script_Message::out("Up to date at rev {$last_rev}");
+        exit(0);
+    }
+    Pfw_Script_Message::out("Pending files:");
+    foreach ($files as $file) {
+        Pfw_Script_Message::out("$file");
+    }
+    Pfw_Script_Message::out("");
+    exit(0);
+}
+// migrate forward
+elseif (isset($a['f'])) {
+    $f = intval($a['f']);
+    if (0 == $f) {
+        Pfw_Script_Message::out("-f option takes a positive integer argument");
+        Pfw_Script_Message::out($USAGE);
+        exit(1);
+    }
+    make_current($f);
+}
+// migrate backward
+elseif (isset($a['b'])) {
+    $b = intval($a['b']);
+    if (0 == $b) {
+        Pfw_Script_Message::out("-b option takes a positive argument");
+        Pfw_Script_Message::out($USAGE);
+        exit(1);
+    }
+    migrate_backward($b);
+}
+// make current
+else {
+    make_current();
+}
+
+
+
+
+
+function migrate_forward($steps)
+{
+    Pfw_Script_Message::out("Stepping forward $steps steps...");
+    make_current($steps);
+    exit();
+}
+
+function migrate_backward($steps)
+{
+    global $_PATHS, $ds, $dryrun;
+    $deltas_dir = rtrim($_PATHS['deltas'], '/');
+
+    $db = get_rev_db();
+
+    Pfw_Script_Message::out("Stepping backward...");
+
+    $rs = $db->fetchAll(
+      "SELECT * FROM changelog WHERE dt_completed IS NOT NULL ORDER BY rev DESC limit {$steps}"
+    );
+    if (empty($rs)) {
+       Pfw_Script_Message::out("Already all the way back!");
+    }
+
+    foreach($rs as $d) {
+        $migration_path = "{$deltas_dir}{$ds}{$d['migration']}";
+        $rev = get_rev_from_file($d['migration']);
+
+        Pfw_Script_Message::out("--- undoing {$d['migration']}");
+        $m = new Pfw_Script_Migration($migration_path, $dryrun);
+        try {
+            if (false == (undo_migration($m))) {
+                exit(1);
+            }
+        } catch (Exception $e) {
+            print "Undo not supported\n";
+            exit(1);
+        }
+        commit_undo($rev);
+        Pfw_Script_Message::out("");
+    }
+
+    Pfw_Script_Message::out("Done!");
+    exit();
+}
+
+function commit_undo($rev)
+{
+    global $dryrun;
+    if($dryrun) {
+        return;
+    }
+    $db = get_rev_db();
+    $ct = $db->update("UPDATE changelog SET dt_completed = NULL WHERE rev = '${rev}'");
+    return ($ct > 0) ? true : false;
+}
+
+function make_current($limit = null)
+{
+    global $_PATHS, $ds, $dryrun;
+    $deltas_dir = rtrim($_PATHS['deltas'], '/');
+
+    list($migrations, $last_rev) = get_remaining_files($limit);
+
+    if (empty($migrations)) {
+        Pfw_Script_Message::out("Up to date at rev {$last_rev}");
+        exit(0);
+    }
+
+    Pfw_Script_Message::out("Stepping forward...");
+    foreach($migrations as $migration_file) {
+        $migration_path = "{$deltas_dir}{$ds}{$migration_file}";
+        $rev = get_rev_from_file($migration_file);
+
+        Pfw_Script_Message::out("--- migrating {$migration_file}");
+        
+        start_migration($rev, $migration_file);
+        if (false === do_migration($migration_path, $rev)) {
+            if (false == $dryrun) {
+                Pfw_Script_Message::out("Failed!");
+            }
+            exit(1);
+        }
+
+        if (false == $dryrun) {
+            Pfw_Script_Message::out("Successfully applied revision $rev");
+        }
+        commit_migration($rev);
+        Pfw_Script_Message::out("");
+    }
+
+    Pfw_Script_Message::out("Done!");
+    exit(0);
+}
+
+function get_remaining_files($limit = null) {
+    global $_PATHS, $ds;
+    $deltas_dir = rtrim($_PATHS['deltas'], '/');
+
+    $last_rev = get_last_rev();
+    $files = Pfw_Script_FileSystem::getFilesInDir($deltas_dir);
+
+    $migrations = array();
+    foreach ($files as $file) {
+        $file = basename($file);
+        if(preg_match('/(\d+)-.*?\.php/', $file, $matches)){
+            if ($matches[1] >= $last_rev) {
+                array_push($migrations, $file);
+            }
+        }
+    }
+    sort($migrations);
+
+    if (!is_null($limit)) {
+        $migrations = array_splice($migrations, 0, $limit);
+    }
+    
+    return array($migrations, $last_rev);
+}
+
+function do_migration($migration_path, $rev) {
+    global $dryrun;
+
+    $m = new Pfw_Script_Migration($migration_path, $dryrun);
+    $ret = true;
+    try {
+        $ret = $m->migrate();
+    } catch (Exception $e) {
+        Pfw_Script_Message::out("Migration {$rev} failed with error: \n".$e->getMessage());
+        undo_migration($m);
+        return false;
+    }
+
+    if ($ret === false) {
+        Pfw_Script_Message::out("Migration {$rev} failed with unknown error");
+        undo_migration($m);
+        return false;
+    }
+    return true;
+}
+
+function undo_migration($migration)
+{
+    global $dryrun;
+    Pfw_Script_Message::out("Running undo...");
+    if (false === $migration->undo()) {
+        if (false == $dryrun)
+            Pfw_Script_Message::out("Undo failed!");
+        return false;
+    } else {
+        if (false == $dryrun)
+            Pfw_Script_Message::out("Undo succeeded!");
+    }
+    return true;
+}
+
+function commit_migration($rev)
+{
+    global $dryrun;
+    if($dryrun) {
+        return;
+    }
+    
+    $db = get_rev_db();
+    $db->update("UPDATE changelog SET dt_completed = NOW() WHERE rev = '$rev'");
+}
+
+function start_migration($rev, $migration)
+{
+    global $dryrun;
+    if($dryrun) {
+        return;
+    }
+    
+    $db = get_rev_db();
+    try {
+        $db->insert(
+          "INSERT INTO changelog(rev, migration, dt_started) ".
+          "VALUES('$rev', '$migration', NOW())"
+        );
+    } catch (Exception $e) {}
+}
+
+function get_last_rev()
+{
+    $db = get_rev_db();
+
+    # see if we have an uncompleted migration
+    $d = $db->fetchOne(
+      "SELECT * FROM changelog WHERE dt_completed IS NULL ORDER BY rev ASC limit 1"
+    );
+    if (!empty($d)) {
+        return intval($d['rev']);
+    }
+
+    $d = $db->fetchOne("SELECT * FROM changelog ORDER BY rev DESC LIMIT 1");
+    if (empty($d)) {
+        return 0;
+    }
+    return intval($d['rev']) + 1;
+}
+
+function get_rev_from_file($migration_file) {
+    $rev = explode('-', $migration_file, 2);
+    $rev = $rev[0];
+    return $rev;
+}
+
+function get_rev_db()
+{
+    $router = new Pfw_Db_Router_Standard($route_name);
+    $route = $router->getWriteRoute();
+    $db = Pfw_Db::factory($route);
+    return $db;
+}
+

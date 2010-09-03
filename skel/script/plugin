@@ -1,0 +1,62 @@
+#!/usr/bin/env php
+<?php
+
+$USAGE =<<<EOU
+usage: plugin -i plugin_url\n
+EOU;
+
+$path = dirname(__FILE__);
+$startup_dir = realpath($path . "/../startup");
+$conf_dir = realpath($path . "/../conf");
+require("{$conf_dir}/environment.php");
+require("{$startup_dir}/prj_base.php");
+
+Pfw_Loader::loadClass('Pfw_Script_Fetcher');
+Pfw_Loader::loadClass('Pfw_Script_Archive');
+Pfw_Loader::loadClass('Pfw_Script_FileSystem');
+Pfw_Loader::loadClass('Pfw_Script_Plugin');
+Pfw_Loader::loadClass('Pfw_Script_Message');
+Pfw_Loader::loadClass('Pfw_Script_CLI');
+
+$shortopts = "i:h"; // Optional value
+
+$a = Pfw_Script_CLI::getopt($shortopts, array('help'));
+
+if (empty($a['i']) or isset($a['h']) or isset($a['help'])) {
+    Pfw_Script_Message::out($USAGE);
+    exit();
+}
+
+$new_dir = null;
+$url = $a['i'];
+$filename = $_PATHS['tmp'] . basename($url);
+try {
+    // fetch the plugin tarball
+    Pfw_Script_Fetcher::fetchFile($url, $filename);
+    Pfw_Script_Message::out("Successfully fetched file {$filename}");
+    // expand the tarball
+    Pfw_Script_Archive::expand($filename);
+    $new_dir = realpath($_PATHS['tmp'].DIRECTORY_SEPARATOR.basename($filename, '.tgz'));
+    Pfw_Script_Message::out("Expanded {$filename} into directory {$new_dir}");
+} catch (Pfw_Exception_Script $e) {
+    Pfw_Script_Message::out("Script failed with message: ".$e->getMessage());
+    exit();
+}
+
+// run the install script
+$install_script = $new_dir.DIRECTORY_SEPARATOR."install.php";
+if (!Pfw_Script_FileSystem::exists($install_script)) {
+    Pfw_Script_System::out("Something went wrong, install script '{$install_script}' is missing");
+    exit();
+}
+
+$install_message = "Successfully installed plugin";
+$plugin_name = require($install_script);
+
+if (!empty($plug_name)) {
+    $install_message .= ": {$plugin_name}";
+}
+
+Pfw_Script_Message::out($install_message."\n");
+
+?>

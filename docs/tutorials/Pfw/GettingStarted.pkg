@@ -1,0 +1,353 @@
+<refentry id="{@id}">
+  <refnamediv>
+    <refname>Getting Started</refname>
+    <para>
+  If you have not already followed the {@tutorial Installation.pkg installation instructions}, you should do so now. Picnic is an MVC framework. A basic understanding of the {@link http://en.wikipedia.org/w/index.php?title=Model–view–controller&oldid=342317561 MVC} architecture will be helpful as you work your way through this section.
+    </para>
+  </refnamediv>
+  <refsect1 id="{@id conventions}">
+    <title>Conventions of This Manual</title>
+    <para>
+      Throughout this manual, usage of 'mysite' refers to your project name. All paths are relative to your project root directory. For example, when 'apps/views/greeting/hello.tpl' is referenced, the full path is assumed to be: '/path/to/mysite/apps/views/greeting/hello.tpl'. Only a handful of terminal commands are used, but they are all of the unix variety. If you are using windows, note that cd -&gt; chdir. On unix type systems, the directory '~/' refers to your home directory. An equivalent substitution on windows is %USERPROFILE% ('chdir %USERPROFILE%' makes your home directory the current directory). The directory path separator will always be the unix style forward slash '/'. On windows, substitute a backslash.
+    </para>
+    <para>
+      the following refers to a prompt on an open terminal:
+      <programlisting>
+      $ 
+      </programlisting>
+      the following refers to a prompt on a terminal open to your project's root directory:
+      <programlisting>
+      mysite$ 
+      </programlisting>
+    </para>
+  </refsect1>
+  
+  <refsect1 id="{@id new-project}">
+      <title>Generating a New Project</title>
+    Start by creating a directory to hold your projects if you do not already have one. Then make it the current directory:
+    <programlisting>
+      <itemizedlist>
+        <listitem>$ mkdir ~/Projects</listitem>
+        <listitem>$ cd ~/Projects</listitem>
+      </itemizedlist>
+    </programlisting>
+    <para>
+    Now use the 'picnic' command to generate the project. The picnic command accepts 2 arguments. The first argument (-p) is the name of the project. The second argument (-d) is optional, and is the local domain name associated with the project (the development domain name). The domain argument default to '<emphasis>name</emphasis>.local', where <emphasis>name</emphasis> is the value of the -p argument. When you run the picnic command, it will output a series of instructions which you must complete in order to direct your web server to your new project.
+    </para>
+    <programlisting>
+      <itemizedlist>
+      <listitem>$ picnic -p mysite</listitem>
+      <listitem>&nbsp;</listitem>
+      <listitem>-- creating skeletion projects at: /path/to/mysite... </listitem>
+      <listitem>done!</listitem>
+      <listitem>&nbsp;</listitem>
+      <listitem>NOTES:</listitem>
+      <listitem>** Your default development domain name is stuff.local. You can change this in /path/to/mysite/conf/vhost.conf</listitem>
+      <listitem>** Your default environment is 'development'.</listitem>
+      <listitem>&nbsp;</listitem>
+      <listitem>To complete the installation of mysite.local complete the following steps:</listitem>
+      <listitem>&nbsp;</listitem>
+      <listitem>For a virtual host installation</listitem>
+      <listitem>1) Add the following line to the end of your httpd.conf:</listitem>
+      <listitem>include "/path/to/mysite/conf/vhost.conf"</listitem>
+      <listitem>&nbsp;</listitem>
+      <listitem>For a .htaccss installation</listitem>
+      <listitem>1a) For a htaccess installation, move the file: </listitem>
+      <listitem>"/path/to/mysite/htdocs/.htaccess.sample" to</listitem>
+      <listitem>"/path/to/mysite/htdocs/.htaccess"</listitem>
+      <listitem>1b) Point your web server DocumentRoot at your project's htdocs directory:</listitem>
+      <listitem>"/path/to/mysite/htdocs"</listitem>
+      <listitem>&nbsp;</listitem>
+      <listitem>2) Point stuff.local to 127.0.0.1 in your hosts file (/etc/hosts):</listitem>
+      <listitem>127.0.0.1   mysite.local</listitem>
+      <listitem>&nbsp;</listitem>
+      <listitem>3) Update /path/to/mysite/conf/config.development.php with your project and database configuration.</listitem>
+      </itemizedlist>
+    </programlisting>
+    <refsect2 id="{@id setting-docroot}">
+      <title>setting your DocumentRoot</title>
+      Skip this section if you are using virtual hosts. For .htaccess style projects, you need to point the DocumentRoot of your web server to the htdocs directory in your new project. For example:
+      <programlisting>
+        <itemizedlist>
+          <listitem>DocumentRoot "/path/to/mysite/htdocs"</listitem>
+          <listitem>&lt;Directory "/path/to/mysite/htdocs"&gt;</listitem>
+          <listitem>&nbsp;&nbsp;&nbsp;&nbsp;Options FollowSymLinks</listitem>
+          <listitem>&nbsp;&nbsp;&nbsp;&nbsp;AllowOverride All</listitem>
+          <listitem>&nbsp;&nbsp;&nbsp;&nbsp;Order allow,deny</listitem>
+          <listitem>&nbsp;&nbsp;&nbsp;&nbsp;Allow from all</listitem>
+          <listitem>&lt;/Directory&gt;</listitem>
+        </itemizedlist>
+      </programlisting>
+    </refsect2>
+  </refsect1>
+  <refsect1 id="{@id conventions}">
+    <title>Basic Picnic Conventions</title>    
+    <para>
+    The default url follows the pattern /:controller/:action/:id. If no :action is present in the url, the action will default to 'index'. The ':id' part will default to null if not present. The root url '/' will resolve to the home controller, 'HomeController'  by default. When you type the url "http://mysite.local/" into your browser, it will be routed to the indexAction method in the HomeController class in the file apps/controllers/HomeController.php.
+    </para>
+    <para>
+    By default, the view for the body of the template for your action should be named after the action. The indexAction method in HomeController, for example, renders the template apps/views/home/index.tpl. The default layout is apps/views/layouts/main.tpl. 
+    </para>
+    <para>
+    Controllers are simply files within the /app/controllers directory which are named <emphasis>Name</emphasis>Controller.php and contain a class called <emphasis>Name</emphasis>Controller that extends Prj_Controller_Standard. These details are covered for you when you use the controller generating script script/generate_controller. 
+    </para>
+    <para>
+    Actions within the controller are simply public methods following the convention <emphasis>name</emphasis>Action.
+    </para>
+  </refsect1>
+  <refsect1 id="{@id generating-controller}">
+    <title>Generating a New Controller</title>
+    <refsect2 id="{@id controller-generator}">
+      <title>using the controller generator</title>
+      <para>
+    When you run 'generate_controller -c <emphasis>name</emphasis>', a template directory app/views/<emphasis>name</emphasis> will be created for you. Your controller will contain one action, 'index' (the method named indexAction).
+      </para>
+      <para>
+        Lets take a look at a simple example.
+      <programlisting>
+        <itemizedlist>
+          <listitem>mysite$ php script/generate_controller -c greeting</listitem>
+          <listitem>created controller: GreetingController in file: GreetingController.php</listitem>
+          <listitem>created view: greeting/index.tpl</listitem>
+        </itemizedlist>
+      </programlisting>
+      </para>
+      <para>
+        What you end up with is a controller class that looks like this:
+        {@example GettingStarted/GreetingController.php.1.ex}
+      </para>
+      <para>
+        Now hit this page in your browser: "http://mysite.local/greeting". You should see the following output:
+        <programlisting>
+          <itemizedlist>
+            <listitem>-- this is the layout found in app/views/layouts/main.tpl</listitem>
+            <listitem>-- this is the view body found in app/views/greeting/index.tpl</listitem>
+          </itemizedlist>
+        </programlisting>
+      </para>
+    </refsect2>
+    <refsect2 id="{@id generate-controller-notes}">
+      <title>a few things to note</title>
+      <itemizedlist>
+        <listitem>Notice the call to {@link Pfw_Loader::loadClass() Pfw_Loader::loadClass}('Prj_Controller_Standard'). Library classes are loaded with the {@link Pfw_Loader::loadClass() Pfw_Loader::loadClass}($classname) method. The picnic library loader classpath first checks the app/lib directory, followed by the picnic library dir /path/to/picnic/lib. The argument to this method is a class name. The class is translated to a file on disk by replacing each '_' with a '/' path separator and then appending '.php' to the last piece of the segment. In this case, the class will be found at app/lib/Prj/Controller/Standard.php. For more about picnic library loading, see the section section {@link http://www.picnicphp.com/Pfw/tutorial_ThePicnicEnvironment.pkg.html#loading 'Model and Library Loading'} in the chapter {@tutorial Pfw/ThePicnicEnvironment.pkg#bootstapping 'The Picnic Environment'}.
+        </listitem>
+        <listitem>
+          Our controller extends Prj_Controller_Standard, which is a project-specific controller parent class that itself extends {@link Pfw_Controller_Standard}.
+        </listitem>
+        <listitem>
+          The index action acquires an instance of the view singleton for this controller with the getView() method. See the subsection {@link http://www.picnicphp.com/Pfw/tutorial_TemplatesAndViews.pkg.html#the-basics 'The Basics'} under the chapter {@tutorial Pfw/TemplatesAndViews.pkg 'Templates and Views'} for more information.
+        </listitem>
+        <listitem>
+        The view displays the app/views/greeting/index.tpl template within the layout template app/views/layouts/main.tpl. Layouts are the basic outline of our site which would contain things such as global navigation, doctype declarations, etc. See the section {@link http://www.picnicphp.com/Pfw/tutorial_ThePicnicEnvironment.pkg.html#partials-and-layouts 'Using Partials and Layouts'} in the chapter {@tutorial TemplatesAndViews.pkg Templates and Views} for more information.
+        </listitem>
+      </itemizedlist>
+    </refsect2>
+    <refsect2 id="{@id edit-default-layout}">
+      <title>edit the default layout</title>
+      In app/layouts/main.tpl:
+      {@example GettingStarted/layout.tpl.1.ex}
+    </refsect2>
+    <refsect2 id="{@id edit-greeting-template}">
+      <title>edit the template for our action</title>
+      <para>
+      In file app/greeting/index.tpl:
+      <programlisting>
+        <itemizedlist>
+        <listitem>This is the index template for greeting controller!</listitem>
+        </itemizedlist>
+      </programlisting>
+      </para>
+        Now hit the page in your browser again: "http://mysite.local/greeting". You should see the following output:
+        <programlisting>
+          <itemizedlist>
+            <listitem>Here we are in the default layout!</listitem>
+            <listitem>This is the index template for greeting controller!</listitem>
+          </itemizedlist>
+        </programlisting>
+      </refsect2>
+      <refsect2 id="{@id smarty-resource-helpers}">
+        <title>a few things to note</title>
+        <itemizedlist>
+        <listitem>
+          Notice the calls to {display_doctype}, {display_js_links}, {display_css_links}, {display_alerts}, and {display_layout_body}. These are calls to smarty helper functions. For more information, see the sections {@link http://www.picnicphp.com/Pfw/tutorial_GettingStarted.pkg.html#js-and-css-helpers 'Working With JavaScript And CSS'} and {@link http://www.picnicphp.com/Pfw/tutorial_GettingStarted.pkg.html#picnic-helpers 'Picnic Helper Functions'} in the chapter {@tutorial TemplatesAndViews.pkg Templates and Views}.
+        </listitem>
+        </itemizedlist>
+     </refsect2>
+     
+     <refsect2 id="{@id add-an-action}">
+       <title>adding an action</title>
+       <para>
+       Lets add an action, <emphasis>helloAction</emphasis>, to apps/controllers/GreetingController.php:
+       {@example GettingStarted/GreetingController.php.2.ex}
+       </para>
+       <para>
+       Add our template, app/greeting/hello.tpl:
+       {@example GettingStarted/hello.tpl.1.ex}
+       </para> 
+       <para>
+       Now, hit the url "http://mysite.local/greeting/hello/sean?mood=good" in your browser. You should see the output:
+       <programlisting>
+         <itemizedlist>
+           <listitem>Here we are in the default layout!</listitem>
+           <listitem>Hello sean, how are you today? Are you in a good mood?</listitem>
+           <listitem>You have a controller-global template variable: "this will be set"?</listitem>
+         </itemizedlist>
+       </programlisting>
+       </para>
+     </refsect2>
+  </refsect1>
+  <refsect1 id="{@id create-model}">
+    <title>Creating a New Model</title>
+    <refsect2>
+      <title>database setup</title>
+      <para>
+      Ok folks, things are about to get more interesting. First, using your preferred method, create a new database called 'mysite_dev'. For a tutorial on MySQL basics, see {@link http://dev.mysql.com/doc/refman/5.0/en/tutorial.html this tutorial}. From the terminal, for example:
+        <programlisting>
+          $ echo "create database mysite_dev" | mysql -u root -p
+        </programlisting>
+      </para>
+    
+      <para>
+      Now edit the 'database' section of your config/config.development.php with your database connection parameters, for example, 
+      in config/config.development.php:
+      {@example GettingStarted/config.php.1.ex}
+      </para>
+    </refsect2>
+    <refsect2 id="{@id model-generator}">
+      <title>generate a model</title>
+      <para>
+      We can now generate a model called 'user':
+      <programlisting>
+        <itemizedlist>
+          <listitem>mysite$ ./script/generate_model -m user -s</listitem>
+          <listitem>Choose a table name [users]: &lt;hit enter&gt;</listitem>
+          <listitem>created model: User in file /Users/ssitter/Projects/mysite/app/models/User.php</listitem>
+          <listitem>created unit test: /Users/ssitter/Projects/mysite/app/models/test/User_Test.php</listitem>
+          <listitem>created schema: /Users/ssitter/Projects/mysite/startup/../data/deltas/1-mysql-users_create.sql</listitem>
+        </itemizedlist>
+      </programlisting>
+      </para>
+      <para>
+      Several things have happened here:
+      <itemizedlist>
+        <listitem>A new model, User.php, has been generated in app/models</listitem>
+        <listitem>A unit test for our model has been created in app/models/test</listitem>
+        <listitem>A new migration to create our to create a 'users' table. By accepting default, the table name is the plural of the model. You are also free to choose your own table name on the first prompt.</listitem>
+      </itemizedlist>
+      </para>
+      <para>
+        Lets add first_name and last_name fields to our user schema and then create the new table. 
+        In data/deltas/1-mysql-users_create.sql:
+        {@example GettingStarted/users_create.sql.1.ex}
+      </para>
+      <para>
+        Now create a table for this model in our database, for example:
+        <programlisting>
+        mysite$ mysql -u root -p -D mysite_dev &lt; data/deltas/1-mysql-users_create.sql
+        </programlisting>
+      </para>
+      <para>
+        For more information about generating models, see the {@tutorial ModelsAndPersistence.pkg Models and Persistence} section. You are now all set to start using your new User model!
+      </para>
+    </refsect2>
+  </refsect1>
+  
+  <refsect1 id="{@id end-to-end-example}">
+    <title>An End to End Example Using a New Model</title>
+    <refsect2 id="{@id create-user-controller}">
+      <title>create a the user controller</title>
+      <para>
+        Lets start by creating a new UserController.
+        <programlisting>
+          <itemizedlist>
+            <listitem>mysite$ php script/generate_controller -c user</listitem>
+            <listitem>created controller: UserController in file: UserController.php</listitem>
+            <listitem>created view: user/index.tpl</listitem>
+          </itemizedlist>
+        </programlisting>
+      </para>
+    </refsect2>
+
+    <refsect2 id="{@id set-default-layout}">
+      <title>set the default layout</title>
+      <para>
+    Now lets make some changes to our UserController.
+    First, set a default layout for this controller by modifying the constructor. This allows us to call the {@link Pfw_Smarty_Standard::display() display()} method on the view with 1 argument, the path to the body template, and the layout will be defaulted to 'layouts/main.tpl':
+      {@example GettingStarted/UserController.php.1.ex}
+      </para>
+      <para>
+        For good measure, remove the line that says "-- this is the home index..." found in the layout template 'apps/layouts/main.tpl'.
+      </para>
+    </refsect2>
+    
+    <refsect2 id="{@id load-user-model}">
+      <title>load the user model</title>
+      <para>
+      Now let's include the user model in this controller. This is done with the {@link Pfw_Loader::loadModel()} method. In apps/controllers/UserController.php, add the following lines:
+      {@example GettingStarted/UserController.php.2.ex}
+      </para>
+    </refsect2>
+    <refsect2 id="{@id add-showaction}">
+      <title>add the showAction and show.tpl</title>
+      <para>
+      Let's add a showAction and show.tpl to display an individual user. In apps/controllers/UserController.php, add the following method:
+      {@example GettingStarted/UserController.php.3.ex}
+      </para>
+      <para>
+      In apps/views/user/show.tpl, add the following:
+      {@example GettingStarted/user_show.tpl.1.ex}
+      </para>
+      <para>
+      If you hit "http://mysite.local/user/show" in your browser, you should see: "No user to show!". We have not yet created a user!
+      </para>
+    </refsect2>
+    
+    <refsect2 id="{@id add-create-form}">
+      <title>add the create action and form template</title>
+      <para>
+      Now lets add a createAction, which will be responsible for creating new users. In apps/controllers/UserController.php, add the following method:
+      {@example GettingStarted/UserController.php.4.ex}
+      </para>
+      <para>
+      Now add a the file apps/views/user/create.tpl. This template will build a form for creating a new user:
+      {@example GettingStarted/user_create.tpl.1.ex}
+      </para>
+      <para>
+      Hit the url "http://mysite.local/user/create" in your browser. You will see the form you just created.
+      </para>
+
+      <para>
+      Now lets modify our createAction method to handle the post-back of the data for our new user. In apps/controllers/UserController.php, add the following method:
+      {@example GettingStarted/UserController.php.5.ex}
+      </para>
+
+      <para>
+        There's a lot to take in here so lets step through it:
+        <itemizedlist>
+          <listitem>We're detecting if the method was a post from the form on line four.</listitem>
+          <listitem>If it was a post, we populate the object with data from the form. You should override this method of the form data needs filtering (not validation, that happens in the validate method).</listitem>
+          <listitem>Next we attempt to save this object. The save method returns a boolean true on success or false on failure. Validation issues are a typical cause of failure. You can test for validation errors by calling the hasErrors method on your $user object.</listitem>
+          <listitem>If the save was successful, we redirect to the show method with our user's id. We'll implement this method shortly.</listitem>
+          <listitem>The redirectTo method matches the input array against know routes. The redirect completes this request, and lines 13-15 aren't executed.</listitem>
+          <listitem>If The save fails, the form is rendered again. Since our $user object now contains data, that data will be pre-filled in the proper form fields.</listitem>
+        </itemizedlist>
+      </para>
+    </refsect2>
+
+    <refsect2 id="{@id give-a-try}">
+      <title>give it a try</title>
+      Visit the create page in your browser (http://mysite.local/user/create). Add a first and last and hit submit. You should be taken to the show url for your new user (http://mysite.local/user/show/[id]) with the message: Hello <emphasis>first name</emphasis> <emphasis>last name</emphasis>! This is all well and good (and somewhat fun), but it currently allows you to submit the form with no first and last name, which will create a new user without these properties.
+    </refsect2>
+
+    <refsect2 id="{@id add-validation}">
+      <title>adding validation</title>
+      <para>
+      What we need to do is add data validation to our user model. We'll override the validate method on our User model and return false if validation fails. Add the following to apps/model/User.php:
+      {@example GettingStarted/User.php.1.ex}
+      </para>
+      <para>
+      Now try creating a new user without the first and/or last name. You should see some error messages above the relevant form fields, and the fields themselves will be highlighted.
+      </para>
+    </refsect2>
+  </refsect1>
+</refentry>

@@ -1,0 +1,42 @@
+#!/usr/bin/env php
+<?php
+
+$USAGE = <<<EOU
+usage: generate_migration -m migration_name\n
+EOU;
+
+$ds = DIRECTORY_SEPARATOR;
+
+$path = dirname(__FILE__);
+$startup_dir = realpath($path . "{$ds}..{$ds}startup");
+$conf_dir = realpath($path . "{$ds}..{$ds}conf");
+require("{$conf_dir}/environment.php");
+require("{$startup_dir}/prj_base.php");
+
+Pfw_Loader::loadClass('Pfw_Script_Message');
+Pfw_Loader::loadClass('Pfw_Script_Template');
+Pfw_Loader::loadClass('Pfw_Script_CLI');
+Pfw_Loader::loadClass('Pfw_Script_Migration');
+
+$shortopts = "m:";
+$a = Pfw_Script_CLI::getopt($shortopts, array('help'));
+
+if (empty($a['m']) or isset($a['h']) or isset($a['help'])) {
+    Pfw_Script_Message::out($USAGE);
+    exit();
+}
+
+$ts = time();
+$migration_filename = "{$ts}-{$a['m']}.php";
+$migration_dir = realpath(rtrim(rtrim($_PATHS['data'], '/'), $ds));
+$migration_path = "{$migration_dir}{$ds}deltas{$ds}{$migration_filename}";
+
+$template_dir = realpath(rtrim(rtrim($_PATHS['misc'], '/'), $ds)."{$ds}file_templates");
+$migration_template_path = "{$template_dir}{$ds}migration.php.template";
+Pfw_Script_Template::saveInstanceToFile(
+    $migration_template_path,
+    $migration_path
+);
+Pfw_Script_Message::out("created migration: {$migration_filename}");
+
+?>

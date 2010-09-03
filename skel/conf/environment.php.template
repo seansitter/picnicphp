@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * Any enviroment specific stuff goes in here.
+ */
+
+global $_picnic_release, $_picnic_path, $_ENVIRONMENT, $_PATHS;
+
+// picnic release info
+$_picnic_release = "0.22";
+// this must be the path to the lib directory which contains 'Pfw'
+$_picnic_path = "${PICNIC_LIB_PATH}";
+
+// set your environment name, which affects which config files are loaded
+if (!isset($_ENVIRONMENT)) {
+    if ($ext_env = getenv("PFW_ENVIRONMENT")) {
+        $_ENVIRONMENT = $ext_env;
+    } else {
+        $_ENVIRONMENT = "development";
+    }
+}
+
+?>

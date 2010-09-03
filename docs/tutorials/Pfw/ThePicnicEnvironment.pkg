@@ -1,0 +1,122 @@
+<refentry id="{@id}">
+ <refnamediv>
+  <refname>The Picnic Environment</refname>
+ </refnamediv>
+ <refsect1 id="{@id bootstrapping}">
+   <title>Picnic Application Bootstrapping</title>
+   <para>
+   The web server rewrite rules pass all requests on to htdocs/bootstrap.php. This file includes two others from the startup directory:
+     <itemizedlist>
+       <listitem><emphasis>startup/prj_base.php</emphasis> sets up the picnic environment, paths, and the minimal set of libraries required for picnic. External (non web request) scripts like batch jobs need only include this file to have a complete environment.</listitem>
+       <listitem><emphasis>startup/prj_startup.php</emphasis> actually runs the application and request specific requirements. It begins the session, initializes plugins and alerts, dispatches the request through the front controller. The front controller resolves the route to a controller and action, instantiates the controller and executes the action. Finally, prj_base.php handles exceptions that bubble up to the top level.</listitem>
+     </itemizedlist>
+   </para>
+
+   <para>
+   There are several noteworthy items in <emphasis>startup/prj_base.php</emphasis>. First, prj_base.php includes the file environment.php, which has several roles:
+     <itemizedlist>
+       <listitem>It notes the picnic release ($_picnic_release).</listitem>
+       <listitem>It points to the path to the picnic library used for this project ($_picnic_path). When upgrading picnic, you simply repoint this variable to the lib directory in the new release.</listitem>
+       <listitem>It declares the environment (in the global variable $_ENVIRONMENT) that this application is running in. The environment determines, for example, which config files are loaded, where debug output is sent, and how exceptions are handled.</listitem>
+     </itemizedlist>
+   </para>
+
+   <para>
+   Next, it includes the file <emphasis>startup/prj_paths.php</emphasis>. This file is responsible for setting up all of the project's paths in a global associative array $_PATHS. Through this global, you can access most of the important paths in your project.
+   </para>
+ </refsect1>
+ <refsect1 id="{@id loading}">
+   <title>Model and Library Loading</title>
+   <refsect2 id="{@id load-methods}">
+     <title>the load* family of methods</title>
+     <para>
+     Picnic comes with its own package management system. The class Pfw_Loader does all of the heavy lifting of setting up include paths and mapping packages to a directory and file. The methods in this class should be used whenever you include other files in your project. 
+     </para>
+     <para>
+     The methods loadModel, loadClass and loadController are package centric. That is, they accept a string argument with segments separated by underscores. The last segment maps to the actual file, every other segment maps to a directory in the relevant class path. For example, loading the class Pfw_Request_Standard would like for the file "Standard.php" in the directory Pfw/Request within the search path. 
+     </para>
+     <para>
+   The search path for your application is set in startup/prj_base.php. If you know what you are doing, you can add/remove/shuffle directories in the search path in this file.
+     </para>
+     <para>
+       Lets take a look a the various load* methods:
+       <table class="info-table">
+         <thead>
+           <row>
+             <entry>Pfw_Loader Method</entry>
+             <entry>Purpose</entry>
+             <entry>Search Path</entry>
+             <entry>Checks Class Exists</entry>
+           </row>
+         </thead>
+         <tbody>
+           <row>
+             <entry>{@link Pfw_Loader::loadClass() loadClass}($classname)</entry>
+             <entry>Loads class from library search path. Checks if class exists in file.</entry>
+             <entry>/path/to/project/app/lib; /path/to/project/app/lib/ThirdParty; /path/to/picnic/lib; /path/to/picnic/lib/ThirdParty</entry>
+             <entry>yes</entry>
+           </row>
+           <row>
+             <entry>{@link Pfw_Loader::loadModel() loadModel}($model)</entry>
+             <entry>Loads a model from your model directory.</entry>
+             <entry>/path/to/project/app/models</entry>
+             <entry>yes</entry>
+           </row>
+           <row>
+             <entry>{@link Pfw_Loader::loadController() loadController}($controller)</entry>
+             <entry>This is really only used by the picnic front controller when instantiating your controller.</entry>
+             <entry>/path/to/project/app/controllers</entry>
+             <entry>yes</entry>
+           </row>
+           <row>
+             <entry>{@link Pfw_Loader::loadInclude() loadInclude}($include)</entry>
+             <entry>Loads a procedural include or class library (without checking if the class exists in the file) from search path.</entry>
+             <entry>/path/to/project/app/lib; /path/to/project/app/lib/ThirdParty; /path/to/picnic/lib; /path/to/picnic/lib/ThirdParty</entry>
+             <entry>no</entry>
+           </row>
+         </tbody>
+       </table>
+     </para>
+     <para>
+     Note that the last argument for loadInclude and loadFile is a boolean $once, which will ensure that the file is only included once (php is unhappy when the same file is included multiple times). The {@link Pfw_Loader::loadClass() loadClass()} and {@link Pfw_Loader::loadModel() loadModel()} methods do this automatically by checking if the class has already been loaded. The {@link Pfw_Loader::loadClass() loadClass} method has an optional $path_prefix argument which will be prepended to the resolution of your class before it is mapped to disk.
+    </para>
+    <para>
+     If the file you are attempting to include cannot be found in the include paths, an exception of type {@link Pfw_Exception_Loader} is thrown. Catching this exception allows you to continue processing the request, or manage the failure in a specific way.
+    </para>
+    <para>
+     The search path for your project is always ahead of the search path for your picnic install. If you know what you are doing, you can even replace picnic core libraries with your own implementation simply by including a file of the same name and path in your app/libs directory.
+    </para>
+  </refsect2>
+  <refsect2>
+    <title>where do my libraries go?</title>
+    <para>
+    A solid question! Your non-model libraries should probably go in the Prj package in app/libs, but you can feel free to create a different package in app/libs if you wish. Third party libraries should go in the app/libs/ThirdParty.
+    </para>
+  </refsect2>
+ </refsect1>
+ <refsect1 id="{@id goingtoproduction}">
+   <title>Going to Production (and $_ENVIRONMENT)</title>
+   <para>
+ The default value of the global $_ENVIRONMENT (set in conf/environment.php) is "development". In this mode, error and exception output is sent back to the page in order to simplify debugging. In your production environment, setting this variable to "production" will instead cause errors to go to your logfile and a 404 page to be rendered. This behavior can be fine-tuned in your startup/prj_startup.php script.
+   </para>
+  </refsect1>
+  <refsect1 id="{@id configfiles}">
+    <title>Config Files</title>
+    <para>
+   Config files are loaded in a specific order, with environment specific overrides. They are simple php files which return an associative array of config params. The default config file, conf/config.default.php is always loaded. A config file dependent on the value of the global $_ENVIRONMENT is loaded second. This file has the name "config.{$_ENVIRONMENT}.php". Top level key from the default file are overridden by the keys of the same name in the environment specific file. All other keys are merged to create the final configuration. Config parameters can be accessed from anywhere in the project with the {@link Pfw_Config::get()} method.
+   </para>
+ </refsect1>
+ <refsect1 id="{@id generatortemplates}">
+   <title>Generator Templates</title>
+   <para>
+ The directory misc/file_templates contains templates which are used by the generator scripts. By modifying these templates, you can affect the files that are output by those generators. For example, you may wish to have all of your models descend from a class other than {@link Pfw_Model}.
+   </para>
+ </refsect1>
+ <refsect1 id="{@id resources}">
+   <title>CSS, JavaScript, and Image Resources</title>
+   <para>
+ Your CSS, JavaScript, and image resources go into subdirectories of htdocs. Picnic will not route requests requests to these directories to controllers. For moor information on including CSS and JavaScript in your templates, see the section {@tutorial Pfw/TemplatesAndViews.pkg Templates And Views}.
+   </para>
+ </refsect1>
+</refentry>
+
